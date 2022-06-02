@@ -19,5 +19,5 @@ To rebuild plugin in browser, e.g. with updates to the "readme" tiddler, run `$t
 ### 0.1.13
 
 * Inserts LaTeX-style page breaks between each rendered tiddler
-* Adds a comment/note at the top of the file, that by default says "Exported from TiddlyWiki at <<now>>"
+* Adds a comment/note at the top of the file, that by default says "Exported from TiddlyWiki at \<\<now\>\>"
 * Doesn't render empty `tags: []` in the front matter
