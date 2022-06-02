@@ -1,16 +1,17 @@
 export const name = "markdown-export";
 
-const defaultFilter = "";
-const defaultFormat = "markdown";
-
 export const params = [
     {
         name: "filter",
-        default: defaultFilter
+        default: ""
     },
     {
-        name: "format",
-        default: defaultFormat
+        name: "note",
+        default: ""
+    },
+    {
+        name: "version",
+        default: ""
     },
 ];
 
@@ -31,11 +32,56 @@ interface TableCell {
     align: string | undefined;
 }
 
-class MarkdownRenderer {
+class TiddlyWikiRenderer {
     private tw: $TW;
-    private rules: RulesRecord;
+    private widgetOptions: any;
 
     constructor(tw: $TW) {
+        this.tw = tw;
+
+        // Imports built-in macros and custom macros in the tiddler, including the $:/tags/Macro/View tag
+        const macroImport = "[[$:/core/ui/PageMacros]] [all[shadows+tiddlers]tag[$:/tags/Macro]!has[draft.of]] [all[shadows+tiddlers]tag[$:/tags/Macro/View]!has[draft.of]]";
+
+        this.widgetOptions = {
+            document: $tw.fakeDocument,
+            mode: "block",
+            importVariables: macroImport,
+            recursionMarker: "yes",
+        };
+    }
+
+    /** Let TiddlyWiki parse the tiddler text and build a widget tree */
+    renderWidgetTree(title: string): TW_Node[] {
+        const widgetNode = this.tw.wiki.makeTranscludeWidget(title, this.widgetOptions);
+        const container = this.tw.fakeDocument.createElement("div");
+        widgetNode.render(container, null);
+
+        // Get the first-level nodes in the tree
+        return container.children[0].children as TW_Node[];
+    }
+
+    /** "Wikify" a WikiText string */
+    wikifyText(text: string): string {
+        return this.tw.wiki.renderText("text/plain", "text/vnd.tiddlywiki", text);
+    }
+
+    /** Get tiddler fields */
+    getFields(title: string): TiddlerFields | null {
+        const tiddler = this.tw.wiki.getTiddler(title);
+        if (tiddler == null) {
+            console.warn("Found no such tiddler", title);
+            return null;
+        }
+        // Clone tiddler fields
+        return { ...tiddler.fields };
+    }
+}
+
+class MarkdownRenderer {
+    private tw: TiddlyWikiRenderer;
+    private rules: RulesRecord;
+
+    constructor(tw: TiddlyWikiRenderer) {
         this.tw = tw;
         this.rules = this.getRules();
     }
@@ -49,22 +95,8 @@ class MarkdownRenderer {
             return null;
         }
 
-        // Let TiddlyWiki parse the tiddler text and build a widget tree
-        const widgetNode = this.tw.wiki.makeTranscludeWidget(title, widgetOptions);
-        const container = this.tw.fakeDocument.createElement("div");
-        widgetNode.render(container, null);
-
-        // Get the first-level nodes in the tree
-        const nodes = container.children[0].children as TW_Node[];
-
-        // Insert tiddler metadata in the nodes list
-        const tiddler = this.tw.wiki.getTiddler(title);
-        if (tiddler == null) {
-            console.warn("Found no such tiddler", title);
-            return null;
-        }
-        // Clone tiddler fields
-        this.tiddlerFields = { ...tiddler.fields };
+        const nodes = this.tw.renderWidgetTree(title);
+        this.tiddlerFields = this.tw.getFields(title);
 
         let markup = "";
         for (const node of nodes) {
@@ -85,17 +117,12 @@ class MarkdownRenderer {
         return this.renderNode(metaNode) + markup;
     }
 
-    /**
-     * Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes
-     */
+    /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
     private getRules(): RulesRecord {
-        const katexStart = '<annotation encoding="application/x-tex">';
-
         let rules: RulesRecord = {
             // The <meta> tag contains the document's title and other attributes
             "meta": (node) => {
                 const fields = node.attributes;
-                console.log("tw fields", fields);
                 let frontMatter: string[] = [];
                 if (fields.title) {
                     frontMatter.push(`title: '${fields.title}'`);
@@ -109,7 +136,7 @@ class MarkdownRenderer {
                 if (fields.description) {
                     frontMatter.push(`abstract: '${fields.description}'`);
                 }
-                if (fields.tags) {
+                if (fields.tags && fields.tags.length > 0) {
                     frontMatter.push(`tags: ['${fields.tags.join(',')}']`);
                 }
                 return `---\n${frontMatter.join("\n")}\n---\n\n# ${fields.title}\n\n`;
@@ -135,6 +162,7 @@ class MarkdownRenderer {
             "label": (_, im) => im,
             "mark": (_, im) => `<mark>${im}</mark>`,
             "span": (node, im) => {
+                const katexStart = '<annotation encoding="application/x-tex">';
                 if (node.rawHTML && node.rawHTML.indexOf(katexStart) !== -1) {
                     let mathEq = node.rawHTML.substring(node.rawHTML.indexOf(katexStart) + katexStart.length);
                     mathEq = mathEq.substring(0, mathEq.indexOf('</annotation>'));
@@ -227,7 +255,6 @@ class MarkdownRenderer {
                 return `${"    ".repeat(depth)}${listType} ${im}\n`;
             },
             "input": (node) => {
-                console.log("input", node);
                 if (node.attributes?.type === "checkbox") {
                     if (node.attributes?.checked) {
                         return "[x]";
@@ -368,6 +395,7 @@ class MarkdownRenderer {
         return rules;
     }
 
+    /** Get raw text from node */
     private getNodeText(node: TW_Node): string | null {
         if (isTextNode(node)) {
             return node.textContent || "";
@@ -391,6 +419,7 @@ class MarkdownRenderer {
             return this.executeRule(node.tag, node, innerMarkup);
         }
         else {
+            // TODO: Should output raw HTML?
             console.log("Unsupported node type", node);
             return null;
         }
@@ -419,27 +448,46 @@ class MarkdownRenderer {
     }
 }
 
-// Imports built-in macros and custom macros in the tiddler, including the $:/tags/Macro/View tag
-const macroImport = "[[$:/core/ui/PageMacros]] [all[shadows+tiddlers]tag[$:/tags/Macro]!has[draft.of]] [all[shadows+tiddlers]tag[$:/tags/Macro/View]!has[draft.of]]";
+/** Insert note as comment right after front matter */
+function insertNote(markdownTiddler: string, note: string): string {
+    return markdownTiddler.replace(/(---\n+)(#)/, `$1<!-- ${note.replace(/\$/g, "$$$$")} -->\n\n$2`);
+}
 
-const widgetOptions = {
-    document: $tw.fakeDocument,
-    mode: "block",
-    importVariables: macroImport,
-    recursionMarker: "yes",
-};
-
-export function run(filter: string = defaultFilter, format: string = defaultFormat): string {
+/** The macro entrypoint */
+export function run(filter: string = "", note: string = "", version: string = ""): string {
+    console.log(`Running Markdown Export ${version} with filter ${filter}`);
     if (!filter) {
+        console.log("No filter specified, exiting");
         return "";
     }
 
-    let output = "";
-    let renderer = new MarkdownRenderer($tw);
-    for (const title of $tw.wiki.filterTiddlers(filter)) {
-        output += renderer.renderTiddler(title);
+    const twRenderer = new TiddlyWikiRenderer($tw);
+    const renderer = new MarkdownRenderer(twRenderer);
 
-        // TODO: Should markup of multiple tiddlers really just be concatenated?
+    // Expand macros in note
+    note = twRenderer.wikifyText(note);
+
+    let markdownTiddlers: string[] = [];
+    for (const title of $tw.wiki.filterTiddlers(filter)) {
+        console.log(`Rendering [[${title}]] to Markdown`);
+        let markdownTiddler: string | null = null;
+        try {
+            markdownTiddler = renderer.renderTiddler(title);
+        }
+        catch (err) {
+            console.error(err);
+        }
+        if (markdownTiddler) {
+            if (note) {
+                markdownTiddler = insertNote(markdownTiddler, note);
+            }
+
+            markdownTiddlers.push(markdownTiddler.trim());
+        }
     }
-    return output;
+
+    // LaTeX page break, recognized by Pandoc
+    const pageBreak = "\n\n\\newpage\n\n";
+
+    return markdownTiddlers.join(pageBreak);
 };

@@ -35,6 +35,7 @@ interface TW_Wiki {
     parseTiddler: (title: string, options?: any) => TW_Parser;
     parseText: (type: string, text?: string, options?: any) => TW_Parser;
     renderTiddler: (outputType: string, title: string, options?: any) => string;
+    renderText: (outputType: string, textType: string, text: string, options?: any) => string;
 }
 
 interface TW_Node {
