@@ -16,7 +16,11 @@ To rebuild plugin in browser, e.g. with updates to the "readme" tiddler, run `$t
 
 ## Changelog
 
-### 0.1.13
+### 0.2.0 (2022-06-03)
+
+* Pass-through arbitrary HTML into Markdown
+
+### 0.1.13 (2022-06-02)
 
 * Inserts LaTeX-style page breaks between each rendered tiddler
 * Adds a comment/note at the top of the file, that by default says "Exported from TiddlyWiki at \<\<now\>\>"

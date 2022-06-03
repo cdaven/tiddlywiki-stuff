@@ -98,11 +98,11 @@ class MarkdownRenderer {
         const nodes = this.tw.renderWidgetTree(title);
         this.tiddlerFields = this.tw.getFields(title);
 
-        let markup = "";
+        let renderedNodes = "";
         for (const node of nodes) {
             const nodeMarkup = this.renderNode(node);
             if (nodeMarkup != null) {
-                markup += nodeMarkup;
+                renderedNodes += nodeMarkup;
             }
         }
 
@@ -114,7 +114,8 @@ class MarkdownRenderer {
             children: []
         };
 
-        return this.renderNode(metaNode) + markup;
+        let markup = this.renderNode(metaNode) + renderedNodes;
+        return markup.replace(/\n\n\n+/g, "\n\n");
     }
 
     /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
@@ -208,10 +209,10 @@ class MarkdownRenderer {
                     let classRx = node.attributes?.class?.match(/^(.+) hljs$/);
                     if (classRx) {
                         const lang = classRx[1];
-                        return `\`\`\`${lang}\n${im}\n\`\`\`\n\n`;
+                        return `\`\`\`${lang}\n${im.trim()}\n\`\`\`\n\n`;
                     }
                     else {
-                        return `\`\`\`\n${im}\n\`\`\`\n\n`;
+                        return `\`\`\`\n${im.trim()}\n\`\`\`\n\n`;
                     }
                 }
                 else {
@@ -382,6 +383,10 @@ class MarkdownRenderer {
             "tr": () => null,
             "td": (_, im) => im,
             "th": (_, im) => im,
+            // Wildcard rule
+            "*": (node, im) => {
+                return `<${node.tag}>${im.trim()}</${node.tag}>\n`;
+            },
         };
 
         // Inherit identical rules
@@ -413,15 +418,14 @@ class MarkdownRenderer {
         if (isTextNode(node)) {
             return node.textContent || "";
         }
-        else if (isDomNode(node) && node.tag in this.rules) {
+        else if (isDomNode(node)) {
             // Render markup from children depth-first
             const innerMarkup = node.children.map(child => this.renderNode(child)).join("");
-            return this.executeRule(node.tag, node, innerMarkup);
+            return this.executeRule(node, innerMarkup);
         }
         else {
-            // TODO: Should output raw HTML?
-            console.log("Unsupported node type", node);
-            return null;
+            console.error("Unknown type of node", node);
+            throw new Error("Unknown type of node");
         }
     }
 
@@ -443,8 +447,14 @@ class MarkdownRenderer {
         return null;
     }
 
-    private executeRule(tag: string, node: TW_Element, innerMarkup: string): string | null {
-        return this.rules[tag](node, innerMarkup);
+    private executeRule(node: TW_Element, innerMarkup: string): string | null {
+        if (node.tag in this.rules) {
+            return this.rules[node.tag](node, innerMarkup);
+        }
+        else {
+            // Use wildcard rule when tag doesn't have its own rule
+            return this.rules["*"](node, innerMarkup);
+        }
     }
 }
 
@@ -457,7 +467,7 @@ function insertNote(markdownTiddler: string, note: string): string {
 export function run(filter: string = "", note: string = "", version: string = ""): string {
     console.log(`Running Markdown Export ${version} with filter ${filter}`);
     if (!filter) {
-        console.log("No filter specified, exiting");
+        console.warn("No filter specified, exiting");
         return "";
     }
 
