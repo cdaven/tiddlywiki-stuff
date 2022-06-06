@@ -3,3 +3,4 @@ node_modules
 /by-date/tiddlersbydate2.js
 /calendar/tiddlercalendar.js
 /markdown-export/markdown-export.js
+/markdown-export/render.js
