@@ -30,11 +30,15 @@ export class TiddlyWikiRenderer {
             mode: "block",
             importVariables: macroImport,
             recursionMarker: "yes",
+            variables: {
+                currentTiddler: null
+            }
         };
     }
 
     /** Let TiddlyWiki parse the tiddler text and build a widget tree */
     renderWidgetTree(title: string): TW_Node[] {
+        this.widgetOptions.variables.currentTiddler = title;
         const widgetNode = this.tw.wiki.makeTranscludeWidget(title, this.widgetOptions);
         const container = this.tw.fakeDocument.createElement("div");
         widgetNode.render(container, null);
