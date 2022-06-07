@@ -16,6 +16,11 @@ To rebuild plugin in browser, e.g. with updates to the "readme" tiddler, run `$t
 
 ## Changelog
 
+### 0.3.0 (2022-06-07)
+
+* Enable export from `render` command via template
+* Fix bug where `currentTiddler` wasn't set
+
 ### 0.2.0 (2022-06-03)
 
 * Pass-through arbitrary HTML into Markdown

@@ -14,8 +14,10 @@ if (!($?)) {
     Exit
 }
 
-# Update Javascript tiddler
+# Update Javascript tiddlers
 Copy-Item .\markdown-export.js "$TW_NODE_DIR\plugins\markdown-export\`$__plugins_cdaven_markdown-export_markdown-export.js"
+Copy-Item .\render.js "$TW_NODE_DIR\plugins\markdown-export\`$__plugins_cdaven_markdown-export_render.js"
+Copy-Item .\mdtiddler.js "$TW_NODE_DIR\plugins\markdown-export\`$__plugins_cdaven_markdown-export_md-tiddler.js"
 
 # Update plugin metadata
 $PLUGIN_INFO_FILE = "$TW_NODE_DIR\plugins\markdown-export\plugin.info"
