@@ -4,3 +4,4 @@ node_modules
 /calendar/tiddlercalendar.js
 /markdown-export/markdown-export.js
 /markdown-export/render.js
+/markdown-export/mdtiddler.js
