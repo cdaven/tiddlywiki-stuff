@@ -2,7 +2,7 @@ $TW_SINGLE_FILE = "..\..\cdaven.github.io\tiddlywiki\index.html"
 $TW_NODE_DIR = "TW5.Test"
 
 Write-Host "Loading TiddlyWiki ..."
-tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
+npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
 
 function RemoveFrontMatter()
 {
@@ -36,7 +36,7 @@ function TestExport()
 
     $mdFile = $TwPage -replace "/", "_"
 
-    tiddlywiki $TW_NODE_DIR --output . --render "$TwPage" "$mdFile.md" 'text/plain' '$:/plugins/cdaven/markdown-export/md-tiddler'
+    npx tiddlywiki $TW_NODE_DIR --output . --render "$TwPage" "$mdFile.md" 'text/plain' '$:/plugins/cdaven/markdown-export/md-tiddler'
 
     $actual = RemoveFrontMatter(Get-Content "$mdFile.md" | Out-String)
     if (CompareMarkdown -Actual $actual -Expected $expected) {
@@ -50,11 +50,16 @@ function TestExport()
         $host.ui.RawUI.ForegroundColor = "DarkRed"
         Write-Host "[[$TwPage]] failed!"
         $host.ui.RawUI.ForegroundColor = $originalColor
-        Write-Host "--- Expected:"
-        Write-Host $expected
-        Write-Host "--- Actual:"
-        Write-Host $actual
-        Write-Host "---"
+        
+        # Write-Host "--- Expected:"
+        # Write-Host $expected
+        # Write-Host "--- Actual:"
+        # Write-Host $actual
+        # Write-Host "---"
+
+        Write-Host "Saving actual and expected data to files"
+        $actual | Out-File "$mdFile.actual.md"
+        $expected | Out-File "$mdFile.expected.md"
     }
 
     Remove-Item "$mdFile.md"
@@ -63,14 +68,19 @@ function TestExport()
 # -------------------------------------------------------------------------
 $foo = @'
 Hello
+
 '@
 
 $bar = @'
+
 World
 '@
 
 if (CompareMarkdown -Expected $foo -Actual $bar) {
+    $originalColor = $host.ui.RawUI.ForegroundColor
+    $host.ui.RawUI.ForegroundColor = "DarkRed"
     Write-Host "Sanity check failed"
+    $host.ui.RawUI.ForegroundColor = $originalColor
 }
 
 # -------------------------------------------------------------------------
@@ -155,39 +165,36 @@ $expected = @'
 
 ## Mixed
 
-1. First
-    * Sub1
-    * Sub2
-
-1. Second
-    * Sub3
-        * Sub3a
-        * Sub3b
-            1. Sub3b1
-            1. Sub3b2
+1. 1-1
+    * 2-1
+    * 2-2
+1. 1-2
+    * 2-3
+        * 3-1
+        * 3-2
+            1. 4-1
+            1. 4-2
 
 ## With Quotes
 
-This doesn't render well, *yet*.
+WikiText seems to render blockquote-list-items wrong when they are not the first child of the ul/ol tag. So we stick to using quotes as the first child of a list:
 
-* List One
-    * List Two> A quote
-> 
-> Another quote
-
-* List Three
+* List Item 1 at Level 1
+    * > A quote at level 2
+    > 
+    > The quote's next line
+* List Item 2 at Level 1
 
 ## With Paragraphs
 
-This doesn't render well, *yet*.
+Must transclude tiddler with multiple paragraphs, since WikiText doesn't allow it.
 
 * First entry
 * Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed semper luctus suscipit. Suspendisse ac ultricies turpis. Maecenas tortor nisl, gravida id lacus sed, vestibulum lacinia urna.
 
-Vivamus volutpat sagittis libero elementum lacinia. Cras faucibus in mi quis feugiat. Nunc finibus vulputate ipsum, id ornare velit lobortis a.
+    Vivamus volutpat sagittis libero elementum lacinia. Cras faucibus in mi quis feugiat. Nunc finibus vulputate ipsum, id ornare velit lobortis a.
 
-Phasellus venenatis ipsum a ligula imperdiet feugiat. Nulla scelerisque elit ipsum, eu ultricies metus placerat quis. Vivamus eget erat a leo porta consequat a id massa.
-
+    Phasellus venenatis ipsum a ligula imperdiet feugiat. Nulla scelerisque elit ipsum, eu ultricies metus placerat quis. Vivamus eget erat a leo porta consequat a id massa.
 * Third entry
 '@
 TestExport -TwPage 'TestPage/Lists' -Expected $expected

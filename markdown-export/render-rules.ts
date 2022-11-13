@@ -41,12 +41,13 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 frontMatter.push(`tags: [${tags.join(', ')}]`);
             }
             for (const field in fields) {
-                if (field in ["text", "title", "author", "modified", "description", "tags"])
+                if (["text", "title", "author", "modified", "description", "tags"].indexOf(field) !== -1)
                     // Ignore full text and the fields already taken care of
                     continue;
 
                 // Clean up field name
                 const fieldName = field.replace(/\s+/g, "-").replace(":", "");
+
                 // Clean up field value
                 let fieldValue = fields[field];
                 if (fieldValue instanceof Date) {
@@ -60,8 +61,25 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             }
             return `---\n${frontMatter.join("\n")}\n---\n\n# ${fields.title}\n\n`;
         },
-        // Add newlines after paragraphs
-        "p": (_, im) => `${im.trim()}\n\n`,
+        "p": (node, im) => {
+            if (node.parentNode?.tag === "li") {
+                const newlines = renderer.isLastChild(node)
+                    ? "\n" // End with one newline for the last child
+                    : "\n\n"; // End with two newlines between paragraphs
+                if (node.parentNode.children[0] == node) {
+                    // The first <p> inside a <li> is rendered as inline text
+                    return `${im.trim()}${newlines}`;
+                }
+                else {
+                    // Subsequent <p> inside a <li> is rendered with indentation
+                    return `    ${im.trim()}${newlines}`;
+                }
+            }
+            else {
+                // Add newlines after paragraphs
+                return `${im.trim()}\n\n`;
+            }
+        },
         "em": (_, im) => `*${im}*`,
         "strong": (_, im) => `**${im}**`,
         "u": (_, im) => `<u>${im}</u>`,
@@ -138,16 +156,21 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 return `\`${im}\``;
             }
         },
-        "blockquote": (_, im) => {
+        "blockquote": (node, im) => {
+            let indentation = "";
+            if (node.parentNode?.tag === "li") {
+                indentation = "    ";
+            }
             // Insert "> " at the beginning of each line
-            return `> ${im.trim().replace(/\n/g, "\n> ")}\n\n`
+            const prefix = `${indentation}> `;
+            return `${prefix}${im.trim().replace(/\n/g, `\n${prefix}`)}\n\n`
         },
         "cite": (_, im) => {
             return `<cite>${im}</cite>`;
         },
         // Lists
         "ul": (node, im) => {
-            if (node.parentNode && node.parentNode.tag === "li") {
+            if (node.parentNode?.tag === "li") {
                 // Nested list, should not end with double newlines
                 return `\n${im}`;
             }
@@ -172,9 +195,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 curNode = curNode.parentNode;
             }
             const indent = "    ".repeat(depth);
-            // Detta fungerar inte som tänkt...
-            im = trimEnd(im.replace(/\n/g, `\n${indent}`));
-            return `${indent}${listType} ${im}\n`;
+            return `${indent}${listType} ${im.trim()}\n`;
         },
         "input": (node) => {
             if (node.attributes?.type === "checkbox") {
@@ -230,15 +251,15 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 return null;
             }
 
-            let justifyLeft = (s: string | null, w: number) => {
+            const justifyLeft = (s: string | null, w: number) => {
                 const sLen = s?.length || 0;
                 return s + ' '.repeat(w - sLen);
             }
-            let justifyRight = (s: string | null, w: number) => {
+            const justifyRight = (s: string | null, w: number) => {
                 const sLen = s?.length || 0;
                 return ' '.repeat(w - sLen) + s;
             }
-            let center = (s: string | null, w: number) => {
+            const center = (s: string | null, w: number) => {
                 const sLen = s?.length || 0;
                 const spacesLeft = Math.ceil((w - sLen) / 2);
                 const spacesRight = w - sLen - spacesLeft;
@@ -305,7 +326,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
         "td": (_, im) => im,
         "th": (_, im) => im,
         // Generic block element rule
-        "address": (node, im) => {
+        "block": (node, im) => {
             if (im.trim().length > 0) {
                 return `<${node.tag}>${im.trim()}</${node.tag}>\n`;
             }
@@ -329,20 +350,21 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
     rules["ol"] = rules["ul"];
 
     // Generic block elements
-    rules["article"] = rules["address"];
-    rules["aside"] = rules["address"];
-    rules["details"] = rules["address"];
-    rules["dialog"] = rules["address"];
-    rules["fieldset"] = rules["address"];
-    rules["figcaption"] = rules["address"];
-    rules["figure"] = rules["address"];
-    rules["footer"] = rules["address"];
-    rules["form"] = rules["address"];
-    rules["header"] = rules["address"];
-    rules["hgroup"] = rules["address"];
-    rules["main"] = rules["address"];
-    rules["nav"] = rules["address"];
-    rules["section"] = rules["address"];
+    rules["address"] = rules["block"];
+    rules["article"] = rules["block"];
+    rules["aside"] = rules["block"];
+    rules["details"] = rules["block"];
+    rules["dialog"] = rules["block"];
+    rules["fieldset"] = rules["block"];
+    rules["figcaption"] = rules["block"];
+    rules["figure"] = rules["block"];
+    rules["footer"] = rules["block"];
+    rules["form"] = rules["block"];
+    rules["header"] = rules["block"];
+    rules["hgroup"] = rules["block"];
+    rules["main"] = rules["block"];
+    rules["nav"] = rules["block"];
+    rules["section"] = rules["block"];
 
     return rules;
 }

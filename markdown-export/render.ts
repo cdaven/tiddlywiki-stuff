@@ -153,6 +153,24 @@ export class MarkdownRenderer implements IMarkupRenderer {
         return null;
     }
 
+    isFirstChild(node: TW_Node): boolean {
+        if (node.parentNode == null) {
+            // Define all root elements as the first and last children
+            return true;
+        }
+
+        return node == node.parentNode.children[0];
+    }
+
+    isLastChild(node: TW_Node): boolean {
+        if (node.parentNode == null) {
+            // Define all root elements as the first and last children
+            return true;
+        }
+
+        return node == node.parentNode.children[node.parentNode.children.length - 1];
+    }
+
     private executeRule(node: TW_Element, innerMarkup: string): string | null {
         if (node.tag in this.rules) {
             return this.rules[node.tag](node, innerMarkup);
