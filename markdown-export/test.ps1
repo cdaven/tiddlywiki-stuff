@@ -346,7 +346,9 @@ TestExport -TwPage 'TestPage/Misc' -Expected $expected
 $expected = @'
 # TestPage/FontAwesome
 
-I would  some !
+FontAwesome icons will be rendered as �. I would recommend using Unicode characters instead of icons in the text.
+
+I would � some �!
 '@
 TestExport -TwPage 'TestPage/FontAwesome' -Expected $expected
 

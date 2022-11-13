@@ -42,6 +42,13 @@ Recommended tsconfig.json:
 
 ## Changelog
 
+### 0.4.0 (2022-11-3)
+
+* Render all custom fields as YAML properties in the front matter
+* Fix bug where tags were rendered as `tags: ['TestData,Tag2,Another Tag']` instead of `tags: ['TestData', 'Tag2', 'Another Tag']`
+* Fix miscellaneous problems with rendering of nested lists
+* Render FontAwesome icons as � instead of nothing
+
 ### 0.3.0 (2022-06-07)
 
 * Enable export from `render` command via template

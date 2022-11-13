@@ -14,4 +14,6 @@ export interface IMarkupRenderer {
     renderTiddler(title: string): string | null;
     renderNode(node: TW_Node): string | null;
     getNextNode(node: TW_Node): TW_Node | null;
+    isFirstChild(node: TW_Node): boolean;
+    isLastChild(node: TW_Node): boolean;
 }

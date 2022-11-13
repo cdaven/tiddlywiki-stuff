@@ -238,6 +238,16 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             }
             return `![${caption}](${src})`;
         },
+        "i": (node, im) => {
+            if (node.attributes?.class) {
+                const classes: string[] = node.attributes.class.split(" ");
+                if (im.trim().length === 0 && classes.some(c => c.startsWith("fa-"))) {
+                    // Lazily render all FontAwesome icons as a replacement character
+                    return "�";
+                }
+            }
+            return null;
+        },
         // Tables
         "table": (node) => {
             let tbody: TW_Element | null = null;
