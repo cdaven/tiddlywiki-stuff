@@ -1,3 +1,9 @@
+/*\
+title: $:/plugins/cdaven/markdown-export/markdown-export.js
+type: application/javascript
+module-type: macro
+\*/
+
 import { TiddlyWikiRenderer, MarkdownRenderer } from "./render.js";
 
 export const name = "markdown-export";

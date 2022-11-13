@@ -10,9 +10,35 @@ You are welcome to create [issues](https://github.com/cdaven/tiddlywiki-stuff/is
 
 ## Building
 
-When done updating markdown-export.ts, run `make.ps1` (Windows only).
+When done updating Typescript files, run `make.ps1` (Windows only).
 
-To rebuild plugin in browser, e.g. with updates to the "readme" tiddler, run `$tw.utils.repackPlugin("$:/plugins/cdaven/markdown-export")`.
+This build process requires Powershell and npm. You should probably install Typescript and TiddlyWiki locally:
+
+```
+npm install typescript tiddlywiki
+```
+
+Also, make sure that Typescript preserves comments, and that it doesn't add "use strict" at the top of every Javascript file.
+
+Recommended tsconfig.json:
+
+```json
+{
+    "compilerOptions": {
+        "target": "es2015",
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "strict": false,
+        "alwaysStrict": false,
+        "noImplicitUseStrict": true,
+        "removeComments": false,
+        "sourceMap": false
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
+```
 
 ## Changelog
 

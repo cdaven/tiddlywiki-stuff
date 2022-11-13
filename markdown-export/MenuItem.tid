@@ -1,0 +1,7 @@
+created: 20220421104331124
+description: Markdown
+extension: .md
+tags: $:/tags/Exporter
+title: $:/plugins/cdaven/markdown-export/MenuItem
+
+<$macrocall $name="markdown-export" filter=<<exportFilter>> note={{$:/plugins/cdaven/markdown-export/exportNote}} version={{$:/plugins/cdaven/markdown-export!!version}} $output="text/raw"/>

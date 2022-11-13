@@ -10,6 +10,10 @@
   "author": "Christian Davén",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.4.4"
+    "typescript": "^4.4.4",
+    "tape": "^5.5.3",
+    "tiddlywiki": "^5.2.3"
+  },
+  "dependencies": {
   }
 }

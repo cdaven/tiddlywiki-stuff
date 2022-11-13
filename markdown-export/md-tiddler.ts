@@ -1,8 +1,12 @@
-import { TiddlyWikiRenderer, MarkdownRenderer } from "./render.js";
+/*\
+title: $:/plugins/cdaven/markdown-export/md-tiddler.js
+type: application/javascript
+module-type: macro
 
-/**
- * Macro to output a single tiddler to Markdown, e.g. for use with a template, possibly from the command line.
- */
+Macro to output a single tiddler to Markdown, e.g. for use with a template, possibly from the command line.
+\*/
+
+import { TiddlyWikiRenderer, MarkdownRenderer } from "./render.js";
 
 export const name = "mdtiddler";
 

@@ -3,9 +3,10 @@
         "target": "es2015",
         "module": "commonjs",
         "noImplicitAny": true,
-        "strict": true,
-        "alwaysStrict": true,
-        "removeComments": true,
+        "strict": false,
+        "alwaysStrict": false,
+        "noImplicitUseStrict": true,
+        "removeComments": false,
         "sourceMap": false
     },
     "exclude": [

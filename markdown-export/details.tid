@@ -1,0 +1,40 @@
+created: 20221113100340267
+title: $:/plugins/cdaven/markdown-export/details
+
+!! Markdown Flavour
+
+There are quite a few different Markdown specifications, and I have settled on [[Pandoc Markdown|https://pandoc.org/MANUAL.html#pandocs-markdown]], for two reasons:
+
+# Pandoc Markdown is quite capable, with a lot of extensions. All of these extensions will not work in every Markdown renderer, but most will.
+# [[Pandoc|https://pandoc.org]] itself is a great way to convert from (Pandoc) Markdown to other document formats, such as Word or PDF.
+
+!!! Further conversion with Pandoc
+
+You can convert a Markdown file to Word with this simple Pandoc command:
+
+```
+pandoc -o output.docx input.md
+```
+
+Simply change ".docx" to ".html" or ".pdf" to convert to other formats, or use [[the --to switch|https://pandoc.org/MANUAL.html#option--to]].
+
+You can also convert this Pandoc Markdown file to ~CommonMark or ~GitHub-Flavored Markdown like this:
+
+```
+pandoc -o common.md --to commonmark input.md
+pandoc -o github.md --to gfm input.md
+```
+
+!! Some caveats
+
+Since ~TiddlyWiki is very expressive -- and has a multitude of plugins -- export plugins such as this probably cannot support all possible variations.
+
+Converting to Markdown requires a bunch of compromises, and will therefore be "opinionated". This is how //I// want my Markdown to look.
+
+!! Encoding
+
+The Markdown file will be encoded with UTF-8 and Linux/Mac newlines (still works on Windows!). This should work on most platforms and with most third party applications.
+
+!! System Requirements
+
+The plugin uses relatively modern Javascript ("ES2015") that doesn't work in Internet Explorer. Most modern browsers //should// work.

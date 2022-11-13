@@ -83,6 +83,7 @@ interface Tiddler {
 interface TiddlerFields {
     at?: string;
     bag: string;
+    caption?: string;
     created: Date;
     "draft.of"?: string;
     modified: Date;
