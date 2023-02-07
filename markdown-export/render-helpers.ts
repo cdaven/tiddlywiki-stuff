@@ -35,9 +35,19 @@ export function trimEnd(s: string): string {
 }
 
 export function isTextNode(node: TW_Node): node is TW_TextNode {
-    return node.nodeType === Node.TEXT_NODE;
+    if (node.nodeType === Node.TEXT_NODE)
+        return true;
+    else if (typeof node.nodeType === "undefined")
+        return node.hasOwnProperty("textContent");
+    else
+        return false;
 }
 
 export function isDomNode(node: TW_Node): node is TW_Element {
-    return node.nodeType === Node.ELEMENT_NODE;
+    if (node.nodeType === Node.ELEMENT_NODE)
+        return true;
+    else if (typeof node.nodeType === "undefined")
+        return node.hasOwnProperty("children");
+    else
+        return false;
 }

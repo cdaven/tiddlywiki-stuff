@@ -42,7 +42,12 @@ Recommended tsconfig.json:
 
 ## Changelog
 
-### 0.4.0 (2022-11-3)
+### 0.5.0 (2023-02-07)
+
+* Use "==" for highlighted text, compatible with Pandoc 3.0
+* Workaround for some nodeType bug (in TiddlyWiki?)
+
+### 0.4.0 (2022-11-13)
 
 * Render all custom fields as YAML properties in the front matter
 * Fix bug where tags were rendered as `tags: ['TestData,Tag2,Another Tag']` instead of `tags: ['TestData', 'Tag2', 'Another Tag']`

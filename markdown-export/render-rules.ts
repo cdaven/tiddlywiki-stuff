@@ -97,7 +97,8 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
         },
         "hr": () => `---\n\n`,
         "label": (_, im) => im,
-        "mark": (_, im) => `<mark>${im}</mark>`,
+        // Pandoc 3.0 supports highlighted text using ==, if you specify --from markdown+mark
+        "mark": (_, im) => `==${im}==`,
         "span": (node, im) => {
             const katexStart = '<annotation encoding="application/x-tex">';
             if (node.rawHTML && node.rawHTML.indexOf(katexStart) !== -1) {
