@@ -42,6 +42,12 @@ Recommended tsconfig.json:
 
 ## Changelog
 
+### 0.6.0 (2024-05-04)
+
+* Added toolbar button with dropdown for copy, edit, download
+
+The plugin now requires TiddlyWiki 5.3.0 or newer.
+
 ### 0.5.0 (2023-02-07)
 
 * Use "==" for highlighted text, compatible with Pandoc 3.0

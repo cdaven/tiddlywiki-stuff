@@ -1,9 +1,18 @@
 created: 20220513163340267
+modified: 20240504050636805
 title: $:/plugins/cdaven/markdown-export/readme
 
 This is a plugin for ~TiddlyWiki that lets you export tiddlers to Markdown, either in the web browser or on the command line.
 
 !! In the browser (or similar graphical user interfaces)
+
+!!! Toolbar Markdown button: {{$:/plugins/cdaven/markdown-export/icon}}
+
+Click the "Markdown" button on any tiddler and pick between copying the tiddler's contents as Markdown to the clipboard, open a temporary tiddler with the Markdown code, or download the tiddler as a Markdown file.
+
+Hide or move this button here: [[$:/core/ui/ControlPanel/Toolbars]]
+
+!!! Export tiddlers buttons: {{$:/core/images/export-button}}
 
 Click the "Export tiddler" button or menu item on the tiddler to export, and select "Markdown". A Markdown file will be generated and downloaded.
 

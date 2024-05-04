@@ -5,7 +5,6 @@
         "noImplicitAny": true,
         "strict": false,
         "alwaysStrict": false,
-        "noImplicitUseStrict": true,
         "removeComments": false,
         "sourceMap": false
     },
