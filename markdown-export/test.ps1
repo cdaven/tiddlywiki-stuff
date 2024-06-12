@@ -1,4 +1,6 @@
-$TW_SINGLE_FILE = "..\..\cdaven.github.io\tiddlywiki\index.html"
+#!/usr/bin/env pwsh
+
+$TW_SINGLE_FILE = Join-Path "..\tiddlywiki" -ChildPath "index.html"
 $TW_NODE_DIR = "TW5.Test"
 
 Write-Host "Loading TiddlyWiki ..."
@@ -336,7 +338,7 @@ Horizontal line/break:
 
 ---
 
-I like <mark>marking stuff</mark>, to make it easier to find later.
+I like ==marking stuff==, to make it easier to find later.
 
 <details><summary>This should be open</summary>
 Content will be immediately visible if open is set to "yes".</details>

@@ -3,3 +3,5 @@ node_modules
 /by-date/tiddlersbydate2.js
 /calendar/tiddlercalendar.js
 /markdown-export/*.js
+/markdown-export/TestPage_*.md
+dist/
