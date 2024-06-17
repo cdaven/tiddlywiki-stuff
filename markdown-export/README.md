@@ -49,7 +49,7 @@ Recommended tsconfig.json:
 
 ### 0.6.1 (2024-06-12)
 
-* Added build support on non-Windows machines.
+* Added build support on non-Windows machines, thanks to @hissohathair.
 
 ### 0.6.0 (2024-05-04)
 
