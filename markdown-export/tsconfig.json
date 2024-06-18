@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "es2015",
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "strict": false,
+        "alwaysStrict": false,
+        "noImplicitUseStrict": true,
+        "ignoreDeprecations": "5.0",
+        "removeComments": false,
+        "sourceMap": false,
+        "outDir": "dist",
+    },
+    "include": [
+        "../tiddlywiki.d.ts", 
+        "./*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "../node_modules"
+    ]
+}

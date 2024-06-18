@@ -1,10 +1,18 @@
+#!/usr/bin/env pwsh
+
 param(
     $version
 )
 
-$TW_SINGLE_FILE = "..\..\cdaven.github.io\tiddlywiki\index.html"
+$TW_SINGLE_FILE = Join-Path "..\tiddlywiki" -ChildPath "index.html"
 $TW_NODE_DIR = "TW5"
-$PLUGIN_DIR = "$TW_NODE_DIR\plugins\markdown-export"
+$PLUGIN_DIR = Join-Path $TW_NODE_DIR -ChildPath "\plugins\markdown-export"
+
+# Check that $TW_SINGLE_FILE exists
+if (!(Test-Path $TW_SINGLE_FILE)) {
+    Write-Host "TiddlyWiki file not found: $TW_SINGLE_FILE"
+    Exit
+}
 
 # Compile Typescript
 npx tsc
@@ -24,17 +32,18 @@ if ($version) {
     $pluginInfo.version = $version
     $pluginInfo | ConvertTo-Json | Out-File plugin.info
 }
-Copy-Item plugin.info "$PLUGIN_DIR\"
+Copy-Item plugin.info "$PLUGIN_DIR"
 
 # Update Javascript tiddlers
-Move-Item .\markdown-export.js "$PLUGIN_DIR\"
-Move-Item .\md-tiddler.js "$PLUGIN_DIR\"
-Move-Item .\render.js "$PLUGIN_DIR\"
-Move-Item .\render-helpers.js "$PLUGIN_DIR\"
-Move-Item .\render-rules.js "$PLUGIN_DIR\"
+Move-Item (Join-Path "dist" -ChildPath "markdown-export.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "md-tiddler.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "render.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "render-helpers.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "render-rules.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "core.js") "$PLUGIN_DIR"
 
 # Update content tiddlers
-Copy-Item *.tid "$PLUGIN_DIR\"
+Copy-Item *.tid "$PLUGIN_DIR"
 
 # Generate plugin JSON file
 npx tiddlywiki $TW_NODE_DIR --output . --render '$:/plugins/cdaven/markdown-export' '[encodeuricomponent[]addsuffix[.json]]' 'application/json' '$:/core/templates/json-tiddler'
