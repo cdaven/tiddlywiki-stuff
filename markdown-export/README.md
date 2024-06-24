@@ -10,13 +10,15 @@ You are welcome to create [issues](https://github.com/cdaven/tiddlywiki-stuff/is
 
 ## Building
 
-When done updating Typescript files, run `make.ps1` (Windows only).
-
 This build process requires Powershell and npm. You should probably install Typescript and TiddlyWiki locally:
 
 ```
 npm install typescript tiddlywiki
 ```
+
+For Linux and macOS builds, see [Install PowerShell on Windows, Linux and macOS](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell).
+
+When done updating Typescript files, run `make.ps1`.
 
 Also, make sure that Typescript preserves comments, and that it doesn't add "use strict" at the top of every Javascript file.
 
@@ -31,16 +33,23 @@ Recommended tsconfig.json:
         "strict": false,
         "alwaysStrict": false,
         "noImplicitUseStrict": true,
+        "ignoreDeprecations": "5.0",
         "removeComments": false,
-        "sourceMap": false
+        "sourceMap": false,
+        "outDir": "dist"
     },
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "../node_modules"
     ]
 }
 ```
 
 ## Changelog
+
+### 0.6.1 (2024-06-12)
+
+* Added build support on non-Windows machines, thanks to @hissohathair.
 
 ### 0.6.0 (2024-05-04)
 
