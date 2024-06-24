@@ -17,20 +17,14 @@ if (!(Test-Path $TW_SINGLE_FILE)) {
 # Compile Typescript
 npx tsc
 
-echo "Compiled TypeScript"
-
 # Split TiddlyWiki HTML file to directory
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
 if (!($?)) {
     Exit
 }
 
-echo "Split Tiddlywiki"
-
 # Make sure plugin directory exists
 New-Item -ItemType Directory -Force -Path $PLUGIN_DIR
-
-echo "Created plugin dir"
 
 # Update plugin metadata
 if ($version) {
@@ -51,7 +45,6 @@ Move-Item (Join-Path "dist" -ChildPath "core.js") "$PLUGIN_DIR"
 
 # Update content tiddlers
 Copy-Item *.tid "$PLUGIN_DIR"
->>>>>>> 5d0b90c24dd0e0f4e9bdb047f6f3a8f9b2321017
 
 # Generate plugin JSON file
 npx tiddlywiki $TW_NODE_DIR --output . --render '$:/plugins/cdaven/markdown-export' '[encodeuricomponent[]addsuffix[.json]]' 'application/json' '$:/core/templates/json-tiddler'
