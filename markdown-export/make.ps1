@@ -2,12 +2,14 @@ param(
     $version
 )
 
-$TW_SINGLE_FILE = "..\..\cdaven.github.io\tiddlywiki\index.html"
+$TW_SINGLE_FILE = "../../cdaven.github.io/tiddlywiki/index.html"
 $TW_NODE_DIR = "TW5"
-$PLUGIN_DIR = "$TW_NODE_DIR\plugins\markdown-export"
+$PLUGIN_DIR = "$TW_NODE_DIR/plugins/markdown-export"
 
 # Compile Typescript
 npx tsc
+
+echo "Compiled TypeScript"
 
 # Split TiddlyWiki HTML file to directory
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
@@ -15,8 +17,12 @@ if (!($?)) {
     Exit
 }
 
+echo "Split Tiddlywiki"
+
 # Make sure plugin directory exists
 New-Item -ItemType Directory -Force -Path $PLUGIN_DIR
+
+echo "Created plugin dir"
 
 # Update plugin metadata
 if ($version) {
@@ -24,17 +30,17 @@ if ($version) {
     $pluginInfo.version = $version
     $pluginInfo | ConvertTo-Json | Out-File plugin.info
 }
-Copy-Item plugin.info "$PLUGIN_DIR\"
+Copy-Item plugin.info "$PLUGIN_DIR/"
 
 # Update Javascript tiddlers
-Move-Item .\markdown-export.js "$PLUGIN_DIR\"
-Move-Item .\md-tiddler.js "$PLUGIN_DIR\"
-Move-Item .\render.js "$PLUGIN_DIR\"
-Move-Item .\render-helpers.js "$PLUGIN_DIR\"
-Move-Item .\render-rules.js "$PLUGIN_DIR\"
+Move-Item ./markdown-export.js "$PLUGIN_DIR/"
+Move-Item ./md-tiddler.js "$PLUGIN_DIR/"
+Move-Item ./render.js "$PLUGIN_DIR/"
+Move-Item ./render-helpers.js "$PLUGIN_DIR/"
+Move-Item ./render-rules.js "$PLUGIN_DIR/"
 
 # Update content tiddlers
-Copy-Item *.tid "$PLUGIN_DIR\"
+Copy-Item *.tid "$PLUGIN_DIR/"
 
 # Generate plugin JSON file
 npx tiddlywiki $TW_NODE_DIR --output . --render '$:/plugins/cdaven/markdown-export' '[encodeuricomponent[]addsuffix[.json]]' 'application/json' '$:/core/templates/json-tiddler'

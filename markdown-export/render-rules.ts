@@ -262,6 +262,14 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 return null;
             }
 
+            let thead : TW_Element | null = null;
+            for (const child of node.children) {
+                if (isDomNode(child) && child.tag === "thead") {
+                    thead = child;
+                    break;
+                }
+            }
+
             const justifyLeft = (s: string | null, w: number) => {
                 const sLen = s?.length || 0;
                 return s + ' '.repeat(w - sLen);
@@ -278,6 +286,25 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             }
 
             let grid: TableCell[][] = [];
+
+            if (thead != null) {
+                for (const row of tbody.children) {
+                    if (isDomNode(row) && row.tag === "tr") {
+                        let cellsInCurrentRow: TableCell[] = [];
+                        for (const cell of row.children) {
+                            if (isDomNode(cell)) {
+                                cellsInCurrentRow.push({
+                                    innerMarkup: renderer.renderNode(cell),
+                                    header: cell.tag === "th",
+                                    align: cell.attributes.align,
+                                });
+                            }
+                        }
+                        grid.push(cellsInCurrentRow);
+                    }
+                }
+            }
+
             for (const row of tbody.children) {
                 if (isDomNode(row) && row.tag === "tr") {
                     let cellsInCurrentRow: TableCell[] = [];
