@@ -288,7 +288,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             let grid: TableCell[][] = [];
 
             if (thead != null) {
-                for (const row of tbody.children) {
+                for (const row of thead.children) {
                     if (isDomNode(row) && row.tag === "tr") {
                         let cellsInCurrentRow: TableCell[] = [];
                         for (const cell of row.children) {
