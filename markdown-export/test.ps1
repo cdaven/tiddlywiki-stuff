@@ -103,7 +103,7 @@ if (CompareMarkdown -Expected $foo -Actual $bar) {
 
 $expected = @'
 title: 'TestPage/FrontMatter'
-date: '2024-06-23T08:30:50.917Z'
+date: '2024-06-25T22:25:18.201Z'
 tags: ['Another Tag', 'Tag2', 'TestData']
 created: '2024-06-23T08:22:18.552Z'
 '@

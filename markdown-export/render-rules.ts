@@ -16,6 +16,15 @@ interface TableCell {
     align: string | undefined;
 }
 
+function forceDateToISO(date: Date): string {
+    let fieldAsDate = new Date(date);
+    if (fieldAsDate instanceof Date && !isNaN(fieldAsDate.getTime())) {
+        return fieldAsDate.toISOString();
+    } else {
+        return date.toString();
+    }
+}
+
 /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
 export function getRules(renderer: IMarkupRenderer): RulesRecord {
     let rules: RulesRecord = {
@@ -31,6 +40,8 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             }
             if (fields.modified instanceof Date) {
                 frontMatter.push(`date: '${fields.modified.toISOString()}'`);
+            } else if (fields.modified) {
+                frontMatter.push(`date: '${forceDateToISO(fields.modified)}'`);
             }
             if (fields.description) {
                 frontMatter.push(`abstract: '${fields.description}'`);
@@ -47,9 +58,14 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
 
                 // Clean up field name
                 const fieldName = field.replace(/\s+/g, "-").replace(":", "");
-
-                // Clean up field value
                 let fieldValue = fields[field];
+
+                // Check if field value is a Date in disguise...
+                let fieldAsDate = new Date(fieldValue);
+                if (fieldAsDate instanceof Date && !isNaN(fieldAsDate.getTime())) {
+                    fieldValue = fieldAsDate;
+                }
+
                 if (fieldValue instanceof Date) {
                     const dateValue = new Date(fieldValue);
                     fieldValue = "'" + dateValue.toISOString() + "'";
