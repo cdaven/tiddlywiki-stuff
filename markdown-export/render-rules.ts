@@ -317,7 +317,10 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                             });
                         }
                     }
-                    grid.push(cellsInCurrentRow);
+
+                    if (cellsInCurrentRow.length > 0) {
+                        grid.push(cellsInCurrentRow);
+                    }
                 }
             }
 
