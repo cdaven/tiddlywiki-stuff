@@ -51,7 +51,8 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 // Clean up field value
                 let fieldValue = fields[field];
                 if (fieldValue instanceof Date) {
-                    fieldValue = "'" + fieldValue.toISOString() + "'";
+                    const dateValue = new Date(fieldValue);
+                    fieldValue = "'" + dateValue.toISOString() + "'";
                 }
                 else if (typeof fieldValue !== "number") {
                     // Remove newlines and escape single quotes

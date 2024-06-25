@@ -12,6 +12,13 @@ function RemoveFrontMatter()
     return ($Markdown -Split "^---[\r\n]", 3, "multiline")[2];
 }
 
+function GetFrontMatter()
+{
+    param ($Markdown)
+    $string = ($Markdown -Split "^---[\r\n]", 3, "multiline")[1]
+    return $string.Trim();
+}
+
 function TrimNewlines()
 {
     param ($String)
@@ -34,13 +41,19 @@ function CompareMarkdown()
 
 function TestExport()
 {
-    param ($TwPage, $Expected)
+    param ($TwPage, $Expected, $Scope = "body")
 
     $mdFile = $TwPage -replace "/", "_"
 
     npx tiddlywiki $TW_NODE_DIR --output . --render "$TwPage" "$mdFile.md" 'text/plain' '$:/plugins/cdaven/markdown-export/md-tiddler'
 
-    $actual = RemoveFrontMatter(Get-Content "$mdFile.md" | Out-String)
+    if ($Scope -eq "frontmatter") {
+        $actual = $actual = GetFrontMatter(Get-Content "$mdFile.md" | Out-String)
+    }
+    else {
+        $actual = RemoveFrontMatter(Get-Content "$mdFile.md" | Out-String)
+    }
+    
     if (CompareMarkdown -Actual $actual -Expected $expected) {
         $originalColor = $host.ui.RawUI.ForegroundColor
         $host.ui.RawUI.ForegroundColor = "DarkGreen"
@@ -67,6 +80,7 @@ function TestExport()
     Remove-Item "$mdFile.md"
 }
 
+
 # -------------------------------------------------------------------------
 $foo = @'
 Hello
@@ -86,6 +100,14 @@ if (CompareMarkdown -Expected $foo -Actual $bar) {
 }
 
 # -------------------------------------------------------------------------
+
+$expected = @'
+title: 'TestPage/FrontMatter'
+date: '2024-06-23T08:30:50.917Z'
+tags: ['Another Tag', 'Tag2', 'TestData']
+created: '2024-06-23T08:22:18.552Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter' -Expected $expected -Scope "frontmatter"
 
 $expected = @'
 # TestPage/BasicFormatting
