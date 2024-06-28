@@ -11,16 +11,21 @@ $PLUGIN_DIR = Join-Path $TW_NODE_DIR -ChildPath "\plugins\markdown-export"
 # Check that $TW_SINGLE_FILE exists
 if (!(Test-Path $TW_SINGLE_FILE)) {
     Write-Host "TiddlyWiki file not found: $TW_SINGLE_FILE"
-    Exit
+    Exit 1
 }
 
 # Compile Typescript
 npx tsc
+if (!($?)) {
+    Write-Host "Typescript compilation failed"
+    Exit 2
+}
 
 # Split TiddlyWiki HTML file to directory
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
 if (!($?)) {
-    Exit
+    Write-Host "Failed to split TiddlyWiki file"
+    Exit 1
 }
 
 # Make sure plugin directory exists
