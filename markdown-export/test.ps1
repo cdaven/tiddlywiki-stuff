@@ -103,9 +103,13 @@ if (CompareMarkdown -Expected $foo -Actual $bar) {
 
 $expected = @'
 title: 'TestPage/FrontMatter'
-date: '2024-06-25T22:25:18.201Z'
+date: '2024-06-28T11:35:21.763Z'
 tags: ['Another Tag', 'Tag2', 'TestData']
 created: '2024-06-23T08:22:18.552Z'
+custom-field: 'String with spaces'
+dir-ty-field: '   spaces with string  '
+custom-date: '2024-06-23T00:01:12.345Z'
+a-number: 1234
 '@
 TestExport -TwPage 'TestPage/FrontMatter' -Expected $expected -Scope "frontmatter"
 

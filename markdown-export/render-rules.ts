@@ -2,6 +2,10 @@
 title: $:/plugins/cdaven/markdown-export/render-rules.js
 type: application/javascript
 module-type: library
+
+TODO:
+- Check YAML escaping rules for pandoc: https://pandoc.org/MANUAL.html#extension-yaml_metadata_block
+
 \*/
 
 import { IMarkupRenderer } from "./core";
@@ -16,7 +20,7 @@ interface TableCell {
     align: string | undefined;
 }
 
-function forceDateToISO(date: Date): string {
+function forceDateToISO(date: Date | string): string {
     let fieldAsDate = new Date(date);
     if (fieldAsDate instanceof Date && !isNaN(fieldAsDate.getTime())) {
         return fieldAsDate.toISOString();
@@ -38,9 +42,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             if (fields.author) {
                 frontMatter.push(`author: '${fields.author}'`);
             }
-            if (fields.modified instanceof Date) {
-                frontMatter.push(`date: '${fields.modified.toISOString()}'`);
-            } else if (fields.modified) {
+            if (fields.modified) {
                 frontMatter.push(`date: '${forceDateToISO(fields.modified)}'`);
             }
             if (fields.description) {
@@ -63,7 +65,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 // Check if field value is a Date in disguise...
                 let fieldAsDate = new Date(fieldValue);
                 if (fieldAsDate instanceof Date && !isNaN(fieldAsDate.getTime())) {
-                    fieldValue = fieldAsDate;
+                    fieldValue = forceDateToISO(fieldAsDate);
                 }
 
                 if (fieldValue instanceof Date) {
