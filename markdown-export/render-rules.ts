@@ -20,33 +20,42 @@ interface TableCell {
     align: string | undefined;
 }
 
-function forceDateToISO(date: Date | string): string {
-    let fieldAsDate = new Date(date);
-    if (fieldAsDate instanceof Date && !isNaN(fieldAsDate.getTime())) {
-        return fieldAsDate.toISOString();
-    } else {
-        return date.toString();
-    }
-}
-
 function parseAndFormatDate(str: string): string {
-    // Step 1: Use regex to extract date components
     // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
     const regex = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
     const match = str.match(regex);
-
     if (match) {
-        // Step 2: Construct a date string in ISO format (YYYY-MM-DDTHH:mm:ss)
         const isoDateString = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}Z`;
-
-        // Step 3: Create a Date object
         const date = new Date(isoDateString);
-
-        // Step 4: Convert to ISO string representation
         return date.toISOString();
     } else {
-        throw new Error("Invalid date format");
+        console.warn("Invalid date format", str);
+        return str;
     }
+}
+
+/** Field values are converted to strings by TW, we can switch them back */
+function formatYAMLString(fieldValue: any, enableNumbers : boolean = true): string {
+    const datePatternTW = /^\d{17}$/;
+    if (fieldValue.toISOString) {
+        fieldValue = "'" + fieldValue.toISOString() + "'";
+    }
+    else if (datePatternTW.test(fieldValue)) {
+        fieldValue = "'" + parseAndFormatDate(fieldValue) + "'";
+    }
+    else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
+        fieldValue = fieldValue.toString();
+    }
+    else {
+        // Remove newlines and escape quotes
+        fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
+        if (fieldValue.includes("'")) {
+            fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
+        } else {
+            fieldValue = "'" + fieldValue.replace("'", "''") + "'";
+        }
+    }    
+    return fieldValue;
 }
 
 /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
@@ -70,7 +79,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             }
             if (fields.tags && fields.tags.length > 0) {
                 // Enclose tags with single quotes and escape single quotes inside the tags
-                const tags: string[] = fields.tags.map((t: string) => `'${t.replace("'", "''")}'`);
+                const tags: string[] = fields.tags.map((t: string) => formatYAMLString(t, false));
                 frontMatter.push(`tags: [${tags.join(', ')}]`);
             }
             for (const field in fields) {
@@ -78,30 +87,9 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                     // Ignore full text and the fields already taken care of
                     continue;
 
-                // Clean up field name
+                // Clean up field name and value
                 const fieldName = field.replace(/\s+/g, "-").replace(/[\:]+$/, "");
-                let fieldValue = fields[field];
-
-                // Field values are converted to strings by TW, we can switch them back
-                const datePatternTW = /^\d{17}$/;
-                if (fieldValue.toISOString) {
-                    fieldValue = "'" + fieldValue.toISOString() + "'";
-                }
-                else if (datePatternTW.test(fieldValue)) {
-                    fieldValue = "'" + parseAndFormatDate(fieldValue) + "'";
-                }
-                else if (!isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
-                    fieldValue = fieldValue.toString();
-                }
-                else {
-                    // Remove newlines and escape quotes
-                    fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
-                    if (fieldValue.includes("'")) {
-                        fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
-                    } else {
-                        fieldValue = "'" + fieldValue.replace("'", "''") + "'";
-                    }
-                }
+                let fieldValue = formatYAMLString(fields[field]);
                 frontMatter.push(`${fieldName}: ${fieldValue}`);
             }
             return `---\n${frontMatter.join("\n")}\n---\n\n# ${fields.title}\n\n`;

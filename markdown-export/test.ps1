@@ -157,7 +157,7 @@ TestExport -TwPage 'TestPage/FrontMatter/Numbers' -Expected $expected -Scope "fr
 $expected = @'
 title: 'TestPage/FrontMatter/Tags'
 date: '2024-06-29T00:10:31.866Z'
-tags: ['TestData', 'TestData/Fields', 'Another Tag', 'Tag2', '2024', 'π', 'Tag o''mine']
+tags: ['TestData', 'TestData/Fields', 'Another Tag', 'Tag2', '2024', 'π', "Tag o'mine"]
 created: '2024-06-28T22:39:21.848Z'
 '@
 TestExport -TwPage 'TestPage/FrontMatter/Tags' -Expected $expected -Scope "frontmatter"
