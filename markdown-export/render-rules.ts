@@ -68,7 +68,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 frontMatter.push(`author: '${fields.author}'`);
             }
             if (fields.modified) {
-                frontMatter.push(`date: '${fields.modified.toISOString()}'`);
+                frontMatter.push(`date: '${formatYAMLString(fields.modified)}'`);
             }
             if (fields.description) {
                 frontMatter.push(`abstract: '${fields.description}'`);
