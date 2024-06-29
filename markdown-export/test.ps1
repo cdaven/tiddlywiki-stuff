@@ -102,16 +102,65 @@ if (CompareMarkdown -Expected $foo -Actual $bar) {
 # -------------------------------------------------------------------------
 
 $expected = @'
-title: 'TestPage/FrontMatter'
-date: '2024-06-28T11:35:21.763Z'
-tags: ['Another Tag', 'Tag2', 'TestData']
-created: '2024-06-23T08:22:18.552Z'
-custom-field: 'String with spaces'
-dir-ty-field: '   spaces with string  '
-custom-date: '2024-06-23T00:01:12.345Z'
-a-number: 1234
+title: 'TestPage/FrontMatter/FieldNames'
+date: '2024-06-29T01:37:51.193Z'
+tags: ['TestData', 'TestData/Fields']
+created: '2024-06-28T22:42:41.002Z'
+dir-ty-field: 'dir-ty-field'
+CamelCaseField: 'CamelCaseField'
+ALLCAPS: 'ALLCAPS'
+really-dir-ty-<field>**`::`: 'really-dir-ty-<field>**`::`'
+π: 'π'
+dir-ty-field-lotsa-colons: 'dir-ty-field-lotsa-colons'
 '@
-TestExport -TwPage 'TestPage/FrontMatter' -Expected $expected -Scope "frontmatter"
+TestExport -TwPage 'TestPage/FrontMatter/FieldNames' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Dates'
+date: '2024-06-29T02:10:13.612Z'
+tags: ['TestData', 'TestData/Fields']
+a-date: '2000-10-01'
+a-datetime: '2000-10-01 13:30:00'
+a-number: 2024
+created: '2024-06-28T22:33:52.507Z'
+custom-tw-date: '2024-01-01T00:00:00.000Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Dates' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Strings'
+date: '2024-06-29T02:50:24.871Z'
+tags: ['TestData', 'TestData/Fields']
+created: '2024-06-28T22:36:28.147Z'
+custom-field: 'String with spaces'
+dir-ty-field: '   3 spaces with string   '
+string-with-quotes-around: '"Hello world"'
+string-with-quotes-inside: 'Hello "world", how are you?'
+string-with-single-around: "'Hello world'"
+string-with-single-inside: "McDonald's"
+string-with-yaml-chars: '>- this could be `problematic` [or not]'
+utf8-example: 'π, café, Straße, 从'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Strings' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Numbers'
+date: '2024-06-29T02:37:19.623Z'
+tags: ['TestData', 'TestData/Fields']
+a-large-number: 3.14159265359e12
+a-number: 1234
+a-real-number: 3.14159265359
+created: '2024-06-28T22:37:26.547Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Numbers' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Tags'
+date: '2024-06-29T00:10:31.866Z'
+tags: ['TestData', 'TestData/Fields', 'Another Tag', 'Tag2', '2024', 'π', 'Tag o''mine']
+created: '2024-06-28T22:39:21.848Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Tags' -Expected $expected -Scope "frontmatter"
 
 $expected = @'
 # TestPage/BasicFormatting

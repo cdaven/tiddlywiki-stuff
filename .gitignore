@@ -7,3 +7,4 @@ node_modules
 dist/
 markdown-export/TW5*
 tiddlywiki/TiddlyBackups
+.DS_Store
