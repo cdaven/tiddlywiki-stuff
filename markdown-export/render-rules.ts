@@ -2,10 +2,6 @@
 title: $:/plugins/cdaven/markdown-export/render-rules.js
 type: application/javascript
 module-type: library
-
-TODO:
-- Check YAML escaping rules for pandoc: https://pandoc.org/MANUAL.html#extension-yaml_metadata_block
-
 \*/
 
 import { IMarkupRenderer } from "./core";
