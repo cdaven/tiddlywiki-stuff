@@ -16,6 +16,44 @@ interface TableCell {
     align: string | undefined;
 }
 
+function parseAndFormatDate(str: string): string {
+    // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
+    const regex = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
+    const match = str.match(regex);
+    if (match) {
+        const isoDateString = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}Z`;
+        const date = new Date(isoDateString);
+        return date.toISOString();
+    } else {
+        console.warn("Invalid date format", str);
+        return str;
+    }
+}
+
+/** Field values are converted to strings by TW, we can switch them back */
+function formatYAMLString(fieldValue: any, enableNumbers : boolean = true): string {
+    const datePatternTW = /^\d{17}$/;
+    if (fieldValue.toISOString) {
+        fieldValue = "'" + fieldValue.toISOString() + "'";
+    }
+    else if (datePatternTW.test(fieldValue)) {
+        fieldValue = "'" + parseAndFormatDate(fieldValue) + "'";
+    }
+    else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
+        fieldValue = fieldValue.toString();
+    }
+    else {
+        // Remove newlines and escape quotes
+        fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
+        if (fieldValue.includes("'")) {
+            fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
+        } else {
+            fieldValue = "'" + fieldValue.replace("'", "''") + "'";
+        }
+    }    
+    return fieldValue;
+}
+
 /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
 export function getRules(renderer: IMarkupRenderer): RulesRecord {
     let rules: RulesRecord = {
@@ -29,15 +67,15 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             if (fields.author) {
                 frontMatter.push(`author: '${fields.author}'`);
             }
-            if (fields.modified instanceof Date) {
-                frontMatter.push(`date: '${fields.modified.toISOString()}'`);
+            if (fields.modified) {
+                frontMatter.push(`date: ${formatYAMLString(fields.modified)}`);
             }
             if (fields.description) {
                 frontMatter.push(`abstract: '${fields.description}'`);
             }
             if (fields.tags && fields.tags.length > 0) {
                 // Enclose tags with single quotes and escape single quotes inside the tags
-                const tags: string[] = fields.tags.map((t: string) => `'${t.replace("'", "\\'")}'`);
+                const tags: string[] = fields.tags.map((t: string) => formatYAMLString(t, false));
                 frontMatter.push(`tags: [${tags.join(', ')}]`);
             }
             for (const field in fields) {
@@ -45,18 +83,9 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                     // Ignore full text and the fields already taken care of
                     continue;
 
-                // Clean up field name
-                const fieldName = field.replace(/\s+/g, "-").replace(":", "");
-
-                // Clean up field value
-                let fieldValue = fields[field];
-                if (fieldValue instanceof Date) {
-                    fieldValue = "'" + fieldValue.toISOString() + "'";
-                }
-                else if (typeof fieldValue !== "number") {
-                    // Remove newlines and escape single quotes
-                    fieldValue = "'" + fieldValue.toString().replace(/[\r\n]+/g, "").replace("'", "\\'") + "'";
-                }
+                // Clean up field name and value
+                const fieldName = field.replace(/\s+/g, "-").replace(/[\:]+$/, "");
+                let fieldValue = formatYAMLString(fields[field]);
                 frontMatter.push(`${fieldName}: ${fieldValue}`);
             }
             return `---\n${frontMatter.join("\n")}\n---\n\n# ${fields.title}\n\n`;

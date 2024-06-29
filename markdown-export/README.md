@@ -47,6 +47,11 @@ Recommended tsconfig.json:
 
 ## Changelog
 
+### 0.6.2 (2024-06-29)
+
+* Fix issue #9 (Date format not ISO when exporting using tiddlywiki CLI)
+* Changes to value formatting in frontmatter (metadata) export
+
 ### 0.6.1 (2024-06-12)
 
 * Added build support on non-Windows machines, thanks to @hissohathair.
