@@ -5,3 +5,4 @@ node_modules
 /markdown-export/*.js
 /markdown-export/TestPage_*.md
 dist/
+.DS_Store
