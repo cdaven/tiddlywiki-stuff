@@ -2,7 +2,7 @@
   "title": "$:/plugins/cdaven/markdown-export",
   "description": "Markdown export of tiddlers",
   "author": "cdaven",
-  "version": "0.6.1",
+  "version": "0.6.4",
   "core-version": ">=5.3.0",
   "source": "https://github.com/cdaven/tiddlywiki-stuff/tree/main/markdown-export",
   "plugin-type": "plugin",
