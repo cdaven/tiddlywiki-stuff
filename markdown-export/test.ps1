@@ -5,6 +5,9 @@ $TW_NODE_DIR = "TW5.Test"
 
 Write-Host "Loading TiddlyWiki ..."
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
+if (!($?)) {
+    Exit 9
+}
 
 function RemoveFrontMatter()
 {
@@ -301,6 +304,12 @@ Unfortunately, Markdown has a *very* limited table syntax. The first row must be
 |--------------|------------|-------|
 | Some data    |     ...    | more! |
 |          And |   another  | row   |
+
+## Raw HTML
+
+| Cell1 | Cell2 |
+|-------|-------|
+| Cell3 | Cell4 |
 '@
 TestExport -TwPage 'TestPage/Tables' -Expected $expected
 

@@ -47,9 +47,10 @@ Recommended tsconfig.json:
 
 ## Changelog
 
-### 0.6.1 (2024-06-12)
+### 0.6.? (2024-07-??)
 
-* Added build support on non-Windows machines, thanks to @hissohathair.
+* Added build support on non-Windows machines, thanks to [@hissohathair](https://github.com/hissohathair)
+* Added missing thead tag support for tables, thanks to [@michaeljmcd](https://github.com/michaeljmcd)
 
 ### 0.6.0 (2024-05-04)
 
