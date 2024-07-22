@@ -4,14 +4,14 @@ param(
     $version
 )
 
-$TW_SINGLE_FILE = Join-Path "..\tiddlywiki" -ChildPath "index.html"
+$TW_SINGLE_FILE = Join-Path "../tiddlywiki" -ChildPath "index.html"
 $TW_NODE_DIR = "TW5"
-$PLUGIN_DIR = Join-Path $TW_NODE_DIR -ChildPath "\plugins\markdown-export"
+$PLUGIN_DIR = Join-Path $TW_NODE_DIR -ChildPath "/plugins/markdown-export"
 
 # Check that $TW_SINGLE_FILE exists
 if (!(Test-Path $TW_SINGLE_FILE)) {
     Write-Host "TiddlyWiki file not found: $TW_SINGLE_FILE"
-    Exit 1
+    Exit 9
 }
 
 # Compile Typescript
@@ -25,7 +25,7 @@ if (!($?)) {
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
 if (!($?)) {
     Write-Host "Failed to split TiddlyWiki file"
-    Exit 1
+    Exit 9
 }
 
 # Make sure plugin directory exists
@@ -37,6 +37,7 @@ if ($version) {
     $pluginInfo.version = $version
     $pluginInfo | ConvertTo-Json | Out-File plugin.info
 }
+
 Copy-Item plugin.info "$PLUGIN_DIR"
 
 # Update Javascript tiddlers

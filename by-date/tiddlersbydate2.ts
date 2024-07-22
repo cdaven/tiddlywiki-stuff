@@ -3,8 +3,8 @@ module TiddlersByDate2 {
     exports.name = "tiddlersbydate2";
 
     const defaultFilter = "[all[tiddlers]!is[system]]";
-    const defaultStartDate = null;
-    const defaultEndDate = null; // Is set to today inside run()
+    const defaultStartDate : any = null;
+    const defaultEndDate : any = null; // Is set to today inside run()
     const defaultNumWeeks = "5";
     const defaultFirstDayOfWeek = "1";
 
