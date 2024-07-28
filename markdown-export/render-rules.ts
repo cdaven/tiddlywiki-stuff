@@ -5,7 +5,7 @@ module-type: library
 \*/
 
 import { IMarkupRenderer } from "./core";
-import { btoa, isDomNode, isTextNode, trimEnd } from "./render-helpers";
+import { btoa, isDomNode, isTextNode, trimEnd, formatYAMLString } from "./render-helpers";
 
 type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
 export type RulesRecord = Record<string, NodeRenderer>;
@@ -14,44 +14,6 @@ interface TableCell {
     innerMarkup: string | null;
     header: boolean;
     align: string | undefined;
-}
-
-function parseAndFormatDate(str: string): string {
-    // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
-    const regex = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
-    const match = str.match(regex);
-    if (match) {
-        const isoDateString = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}Z`;
-        const date = new Date(isoDateString);
-        return date.toISOString();
-    } else {
-        console.warn("Invalid date format", str);
-        return str;
-    }
-}
-
-/** Field values are converted to strings by TW, we can switch them back */
-function formatYAMLString(fieldValue: any, enableNumbers : boolean = true): string {
-    const datePatternTW = /^\d{17}$/;
-    if (fieldValue.toISOString) {
-        fieldValue = "'" + fieldValue.toISOString() + "'";
-    }
-    else if (datePatternTW.test(fieldValue)) {
-        fieldValue = "'" + parseAndFormatDate(fieldValue) + "'";
-    }
-    else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
-        fieldValue = fieldValue.toString();
-    }
-    else {
-        // Remove newlines and escape quotes
-        fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
-        if (fieldValue.includes("'")) {
-            fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
-        } else {
-            fieldValue = "'" + fieldValue.replace("'", "''") + "'";
-        }
-    }    
-    return fieldValue;
 }
 
 /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
@@ -84,7 +46,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                     continue;
 
                 // Clean up field name and value
-                const fieldName = field.replace(/\s+/g, "-").replace(/[\:]+$/, "");
+                const fieldName = trimEnd(field.replace(/\s+/g, "-").replace(/[\:]+$/, ""));
                 let fieldValue = formatYAMLString(fields[field]);
                 frontMatter.push(`${fieldName}: ${fieldValue}`);
             }
