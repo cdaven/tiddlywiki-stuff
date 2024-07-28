@@ -51,3 +51,30 @@ export function isDomNode(node: TW_Node): node is TW_Element {
     else
         return false;
 }
+
+/* Field values are converted to strings by TW, we switch them back to types supported by YAML. */
+export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true): string {
+    // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
+    const datePatternTW = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
+
+    if (fieldValue.toISOString) {
+        fieldValue = "'" + fieldValue.toISOString() + "'";
+    }
+    else if (datePatternTW.test(fieldValue)) {
+        const parsedDate = new Date($tw.utils.parseDate(fieldValue));
+        fieldValue = "'" + parsedDate.toISOString() + "'";
+    }
+    else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
+        fieldValue = fieldValue.toString();
+    }
+    else {
+        // Remove newlines and escape quotes
+        fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
+        if (fieldValue.includes("'")) {
+            fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
+        } else {
+            fieldValue = "'" + fieldValue.replace("'", "''") + "'";
+        }
+    }    
+    return fieldValue;
+}

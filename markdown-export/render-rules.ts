@@ -5,7 +5,7 @@ module-type: library
 \*/
 
 import { IMarkupRenderer } from "./core";
-import { btoa, isDomNode, isTextNode, trimEnd } from "./render-helpers";
+import { btoa, isDomNode, isTextNode, trimEnd, formatYAMLString } from "./render-helpers";
 
 type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
 export type RulesRecord = Record<string, NodeRenderer>;
@@ -29,15 +29,15 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             if (fields.author) {
                 frontMatter.push(`author: '${fields.author}'`);
             }
-            if (fields.modified instanceof Date) {
-                frontMatter.push(`date: '${fields.modified.toISOString()}'`);
+            if (fields.modified) {
+                frontMatter.push(`date: ${formatYAMLString(fields.modified)}`);
             }
             if (fields.description) {
                 frontMatter.push(`abstract: '${fields.description}'`);
             }
             if (fields.tags && fields.tags.length > 0) {
                 // Enclose tags with single quotes and escape single quotes inside the tags
-                const tags: string[] = fields.tags.map((t: string) => `'${t.replace("'", "\\'")}'`);
+                const tags: string[] = fields.tags.map((t: string) => formatYAMLString(t, false));
                 frontMatter.push(`tags: [${tags.join(', ')}]`);
             }
             for (const field in fields) {
@@ -45,18 +45,9 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                     // Ignore full text and the fields already taken care of
                     continue;
 
-                // Clean up field name
-                const fieldName = field.replace(/\s+/g, "-").replace(":", "");
-
-                // Clean up field value
-                let fieldValue = fields[field];
-                if (fieldValue instanceof Date) {
-                    fieldValue = "'" + fieldValue.toISOString() + "'";
-                }
-                else if (typeof fieldValue !== "number") {
-                    // Remove newlines and escape single quotes
-                    fieldValue = "'" + fieldValue.toString().replace(/[\r\n]+/g, "").replace("'", "\\'") + "'";
-                }
+                // Clean up field name and value
+                const fieldName = trimEnd(field.replace(/\s+/g, "-").replace(/[\:]+$/, ""));
+                let fieldValue = formatYAMLString(fields[field]);
                 frontMatter.push(`${fieldName}: ${fieldValue}`);
             }
             return `---\n${frontMatter.join("\n")}\n---\n\n# ${fields.title}\n\n`;

@@ -51,6 +51,8 @@ Recommended tsconfig.json:
 
 * Added build support on non-Windows machines, thanks to [@hissohathair](https://github.com/hissohathair)
 * Added missing thead tag support for tables, thanks to [@michaeljmcd](https://github.com/michaeljmcd)
+* Fix issue #9 (Date format not ISO when exporting using tiddlywiki CLI)
+* Changes to value formatting in frontmatter (metadata) export
 
 ### 0.6.0 (2024-05-04)
 
