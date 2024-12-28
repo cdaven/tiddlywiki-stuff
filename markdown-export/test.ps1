@@ -461,6 +461,17 @@ f(x) = \int_{-\infty}^\infty\hat f(\xi)\,e^{2 \pi i \xi x}\,d\xi
 $$
 
 This is an inline formula: $C = \alpha + \beta Y^{\gamma} + \epsilon$
+
+You can also use the widget, either inline: $0 < x \text{ \& } x > 0$
+
+Or as a block:
+
+$$
+\begin{bmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6
+\end{bmatrix}
+$$
 '@
 TestExport -TwPage 'TestPage/KaTeX' -Expected $expected
 

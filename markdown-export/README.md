@@ -47,6 +47,10 @@ Recommended tsconfig.json:
 
 ## Changelog
 
+### 0.6.5 (2024-12-28)
+
+* Fix usage of &, <, > in math equations
+
 ### 0.6.4 (2024-12-28)
 
 * Added build support on non-Windows machines, thanks to [@hissohathair](https://github.com/hissohathair)

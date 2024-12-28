@@ -52,7 +52,14 @@ export function isDomNode(node: TW_Node): node is TW_Element {
         return false;
 }
 
-/* Field values are converted to strings by TW, we switch them back to types supported by YAML. */
+/** Check if the node is the only node in the paragraph or block */
+export function isOnlyNodeInBlock(node: TW_Node): boolean {
+    return node.parentNode
+        && (node.parentNode.tag == "p" || node.parentNode.tag == "div")
+        && node.parentNode.children.length == 1;
+}
+
+/** Field values are converted to strings by TW, we switch them back to types supported by YAML. */
 export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true): string {
     // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
     const datePatternTW = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
@@ -75,6 +82,15 @@ export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true)
         } else {
             fieldValue = "'" + fieldValue.replace("'", "''") + "'";
         }
-    }    
+    }
     return fieldValue;
+}
+
+/** Decode HTML special entities <, >, & that can be used in LaTeX math */
+export function latex_htmldecode(s: string): string {
+    return s.replace(/&lt;|&gt;|&amp;/g, match => ({
+        '&lt;': '<',
+        '&gt;': '>',
+        '&amp;': '&'
+    }[match]));
 }

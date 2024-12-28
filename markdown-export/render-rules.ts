@@ -5,7 +5,7 @@ module-type: library
 \*/
 
 import { IMarkupRenderer } from "./core";
-import { btoa, isDomNode, isTextNode, trimEnd, formatYAMLString } from "./render-helpers";
+import { btoa, formatYAMLString, isDomNode, isOnlyNodeInBlock, isTextNode, latex_htmldecode, trimEnd } from "./render-helpers";
 
 type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
 export type RulesRecord = Record<string, NodeRenderer>;
@@ -94,11 +94,12 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
             const katexStart = '<annotation encoding="application/x-tex">';
             if (node.rawHTML && node.rawHTML.indexOf(katexStart) !== -1) {
                 let mathEq = node.rawHTML.substring(node.rawHTML.indexOf(katexStart) + katexStart.length);
-                mathEq = mathEq.substring(0, mathEq.indexOf('</annotation>'));
+                // The raw HTML is encoded here, but we need to decode at least LaTeX-specific characters such as <, >, &
+                mathEq = latex_htmldecode(mathEq.substring(0, mathEq.indexOf('</annotation>')));
 
-                if (mathEq.startsWith("\n") && mathEq.endsWith("\n")) {
+                if (isOnlyNodeInBlock(node) || (mathEq.startsWith("\n") && mathEq.endsWith("\n"))) {
                     // As a block equation
-                    return `$$${mathEq}$$\n\n`;
+                    return `$$${trimEnd(mathEq)}\n$$\n\n`;
                 }
                 else {
                     // As an inline equation
@@ -253,7 +254,7 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 return null;
             }
 
-            let thead : TW_Element | null = null;
+            let thead: TW_Element | null = null;
             for (const child of node.children) {
                 if (isDomNode(child) && child.tag === "thead") {
                     thead = child;
