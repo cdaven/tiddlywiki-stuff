@@ -16,10 +16,15 @@ if (!(Test-Path $TW_SINGLE_FILE)) {
 
 # Compile Typescript
 npx tsc
+if (!($?)) {
+    Write-Host "Typescript compilation failed"
+    Exit 2
+}
 
 # Split TiddlyWiki HTML file to directory
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
 if (!($?)) {
+    Write-Host "Failed to split TiddlyWiki file"
     Exit 9
 }
 

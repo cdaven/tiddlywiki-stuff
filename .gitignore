@@ -5,3 +5,6 @@ node_modules
 /markdown-export/*.js
 /markdown-export/TestPage_*.md
 dist/
+markdown-export/TW5*
+tiddlywiki/TiddlyBackups
+.DS_Store
