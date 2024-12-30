@@ -1,0 +1,78 @@
+created: 20241228202045496
+module-type: saver
+title: $:/plugins/cdaven/markdown-export/download-saver.js
+type: application/javascript
+
+(function(){
+
+/*jslint node: true, browser: true */
+/*global $tw: false */
+"use strict";
+
+var DownloadSaver2 = function(wiki) {};
+
+DownloadSaver2.prototype.save = function(text,method,callback,options) {
+	options = options || {};
+	// Get the current filename
+	var filename = options.variables.filename;
+	if(!filename) {
+		var p = document.location.pathname.lastIndexOf("/");
+		if(p !== -1) {
+			// We decode the pathname because document.location is URL encoded by the browser
+			filename = $tw.utils.decodeURIComponentSafe(document.location.pathname.substr(p+1));
+		}
+	}
+	if(!filename) {
+		filename = "tiddlywiki.html";
+	}
+	// Set up the link
+	var link = document.createElement("a");
+	var mimeType = this.getMimeType(filename);
+	if(Blob !== undefined && mimeType.startsWith("text/")) {
+		var blob = new Blob([text], {type: mimeType});
+		link.setAttribute("href", URL.createObjectURL(blob));
+	} else {
+		link.setAttribute("href","data:"+mimeType+"," + encodeURIComponent(text));
+	}
+	link.setAttribute("download",filename);
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	// Callback that we succeeded
+	callback(null);
+	return true;
+};
+
+/*
+Information about this saver
+*/
+DownloadSaver2.prototype.info = {
+	name: "download2",
+	capabilities: ["download"],
+	priority: 101
+};
+
+DownloadSaver2.prototype.getMimeType = function(filename) {
+	if (filename.endsWith(".zip")) {
+		return "application/zip;base64";
+	}
+	else {
+		return "text/html";
+	}
+};
+
+/*
+Static method that returns true if this saver is capable of working
+*/
+exports.canSave = function(wiki) {
+	return document.createElement("a").download !== undefined;
+};
+
+/*
+Create an instance of this saver
+*/
+exports.create = function(wiki) {
+	return new DownloadSaver2(wiki);
+};
+
+})();

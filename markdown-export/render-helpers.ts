@@ -89,8 +89,65 @@ export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true)
 /** Decode HTML special entities <, >, & that can be used in LaTeX math */
 export function latex_htmldecode(s: string): string {
     return s.replace(/&lt;|&gt;|&amp;/g, match => ({
-        '&lt;': '<',
-        '&gt;': '>',
-        '&amp;': '&'
+        "&lt;": "<",
+        "&gt;": ">",
+        "&amp;": "&"
     }[match]));
 }
+
+/** Escape special characters in title so it can be used as a filename */
+export function titleToFilename(title: string, wikiLinkStyle: WikiLinkStyle): string {
+    let filename = title;
+    if (filename[0] == ".") {
+        // Escape leading dot in filename à la Logseq
+        // Seems like a good enough default in all cases
+        filename = "%2E" + filename.substring(1);
+    }
+
+    switch (wikiLinkStyle) {
+        case "logseq": {
+            // Escape triple underscores (corresponds to / in Logseq)
+            filename = filename.replace("___", "%5F%5F%5F");
+            if (filename[filename.length - 1] == ".") {
+                // Escape trailing dot in filename (don't know why Logseq does this)
+                filename = filename.substring(0, filename.length - 1) + ".___";
+            }
+            return filename.replace(/<|>|:|\*|\?|\||\\|\/|"|#/g, match => ({
+                "<": "%3C",
+                ">": "%3E",
+                ":": "%3A",
+                "*": "%2A",
+                "?": "%3F",
+                "|": "%7C",
+                "\\": "%5C",
+                "\"": "%22",
+                "#": "%23",
+                // Forward slash is used to create a hierarchy,
+                // but all files are still in the same folder
+                "/": "___",
+            }[match]));
+        }
+        default: {
+            // Obsidian doesn't handle illegal filename characters at all,
+            // but we must do something with them, so why not do as Logseq does?
+            return filename.replace(/<|>|:|\*|\?|\||\\|"|#/g, match => ({
+                "<": "%3C",
+                ">": "%3E",
+                ":": "%3A",
+                "*": "%2A",
+                "?": "%3F",
+                "|": "%7C",
+                "\\": "%5C",
+                "\"": "%22",
+                "#": "%23",
+                // Keep forward slashes, since Obsidian expects a folder structure
+            }[match]));
+        }
+    }
+}
+
+export type WikiLinkStyle = "obsidian" | "logseq" | "default";
+
+// Obsidian accepterar inte ogiltiga filnamn som titlar! Den förväntar sig en mappstruktur och länkar så här: [[mapp/titel|alias]]
+
+// Logseq: .foo/<>:;=~+*.?!|\"'`$#[]{}. --> %2Efoo___%3C%3E%3A;=~+%2A.%3F!%7C%5C%22'`$%23[]{}.___

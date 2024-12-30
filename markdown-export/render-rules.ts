@@ -5,9 +5,9 @@ module-type: library
 \*/
 
 import { IMarkupRenderer } from "./core";
-import { btoa, formatYAMLString, isDomNode, isOnlyNodeInBlock, isTextNode, latex_htmldecode, trimEnd } from "./render-helpers";
+import { btoa, formatYAMLString, isDomNode, isOnlyNodeInBlock, isTextNode, latex_htmldecode, titleToFilename, trimEnd, WikiLinkStyle } from "./render-helpers";
 
-type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
+export type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
 export type RulesRecord = Record<string, NodeRenderer>;
 
 interface TableCell {
@@ -17,7 +17,7 @@ interface TableCell {
 }
 
 /** Get rules for rendering a TiddlyWiki widget tree consisting of HTML-ish elements/nodes */
-export function getRules(renderer: IMarkupRenderer): RulesRecord {
+export function getDefaultRules(renderer: IMarkupRenderer): RulesRecord {
     let rules: RulesRecord = {
         // The <meta> tag contains the document's title and other attributes
         "meta": (node) => {
@@ -204,18 +204,6 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
                 return null;
             }
         },
-        "a": (node, im) => {
-            const href = node.attributes?.href as string;
-            if (href == null || href?.startsWith("#")) {
-                // Render internal links as plain text, since the links probably lose all meaning outside the TiddlyWiki.
-                return im;
-            } else if (im && im != href) {
-                return `[${im}](${href})`;
-            }
-            else {
-                return `<${href}>`;
-            }
-        },
         "img": (node) => {
             let caption = node.attributes?.title || "";
             let src = node.attributes?.src || "";
@@ -400,4 +388,41 @@ export function getRules(renderer: IMarkupRenderer): RulesRecord {
     rules["section"] = rules["block"];
 
     return rules;
+}
+
+/** Get "a" (anchor) rule for rendering links */
+export function getAnchorRule(renderer: IMarkupRenderer, wikiLinkStyle: WikiLinkStyle): NodeRenderer {
+    return (node, im) => {
+        const href = node.attributes?.href as string;
+        if (href?.startsWith("#")) {
+            // Remove leading # character and decode html entities à la TiddlyWiki
+            const target = decodeURIComponent(href.substring(1));
+            const alias = im;
+            switch (wikiLinkStyle) {
+                case "logseq": {
+                    if (target == alias) {
+                        return `[[${titleToFilename(target, wikiLinkStyle)}]]`;
+                    }
+                    else {
+                        // Logseq alias syntax
+                        return `[${alias}]([[${titleToFilename(target, wikiLinkStyle)}]])`;
+                    }
+                }
+                default: {
+                    if (target == alias) {
+                        return `[[${titleToFilename(target, wikiLinkStyle)}]]`;
+                    }
+                    else {
+                        // Obsidian and Zettlr alias syntax
+                        return `[[${titleToFilename(target, wikiLinkStyle)}|${alias}]]`;
+                    }
+                }
+            }
+        } else if (im && im != href) {
+            return `[${im}](${href})`;
+        }
+        else {
+            return `<${href}>`;
+        }
+    };
 }

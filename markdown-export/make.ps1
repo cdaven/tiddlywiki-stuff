@@ -47,6 +47,7 @@ Move-Item (Join-Path "dist" -ChildPath "render.js") "$PLUGIN_DIR"
 Move-Item (Join-Path "dist" -ChildPath "render-helpers.js") "$PLUGIN_DIR"
 Move-Item (Join-Path "dist" -ChildPath "render-rules.js") "$PLUGIN_DIR"
 Move-Item (Join-Path "dist" -ChildPath "core.js") "$PLUGIN_DIR"
+Move-Item (Join-Path "dist" -ChildPath "zip-archive.js") "$PLUGIN_DIR"
 
 # Update content tiddlers
 Copy-Item *.tid "$PLUGIN_DIR"

@@ -1,5 +1,6 @@
 declare let exports: TWMacro;
 declare let $tw: $TW;
+declare let require: (module: string) => unknown;
 
 interface TWMacro {
     name: string;
@@ -13,14 +14,17 @@ interface TWMacroParam {
 }
 
 interface $TW {
+    modules: any;
     wiki: TW_Wiki;
     utils: TW_Utils;
+    rootWidget: TW_Widget;
     fakeDocument: any;
 }
 
 type _tiddler_callback = (tiddler: Tiddler, title: string) => void;
 
 interface TW_Wiki {
+    addTiddler: (fields: Record<string, any>) => void;
     each: (callback: _tiddler_callback) => void;
     getTiddler: (title: string) => Tiddler;
     isSystemTiddler: (title: string) => boolean;
@@ -56,6 +60,7 @@ interface TW_TextNode extends TW_Node {
 
 interface TW_Widget {
     render: (parent: any, nextSibling: any) => void;
+    addEventListener: (type: string, handler: string | ((event: any) => void)) => void;
 }
 
 interface TW_Parser {
@@ -94,4 +99,4 @@ interface TiddlerFields {
     type: TiddlerType;
 }
 
-type TiddlerType = "text/vnd.tiddlywiki" | "text/x-markdown";
+type TiddlerType = "text/vnd.tiddlywiki" | "text/x-markdown" | "application/zip";

@@ -5,11 +5,8 @@ module-type: library
 \*/
 
 import { IMarkupRenderer, IWikiRenderer } from "./core.js";
-import { Node, isTextNode, isDomNode } from "./render-helpers.js";
-import { getRules, RulesRecord } from "./render-rules.js";
-
-// type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
-// type RulesRecord = Record<string, NodeRenderer>;
+import { isDomNode, isTextNode, Node } from "./render-helpers.js";
+import { getDefaultRules, NodeRenderer, RulesRecord } from "./render-rules.js";
 
 // TODO: Look at/think about https://tiddlywiki.com/static/Creating%2520a%2520custom%2520export%2520format.html
 
@@ -67,7 +64,7 @@ export class MarkdownRenderer implements IMarkupRenderer {
 
     constructor(tw: IWikiRenderer) {
         this.tw = tw;
-        this.rules = getRules(this);
+        this.rules = getDefaultRules(this);
     }
 
     /** Fields from TiddlyWiki, but can also store state from rendering to document head */
@@ -169,6 +166,10 @@ export class MarkdownRenderer implements IMarkupRenderer {
         }
 
         return node == node.parentNode.children[node.parentNode.children.length - 1];
+    }
+
+    setRule(tag: string, renderer: NodeRenderer) {
+        this.rules[tag] = renderer;
     }
 
     private executeRule(node: TW_Element, innerMarkup: string): string | null {
