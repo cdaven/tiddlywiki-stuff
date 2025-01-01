@@ -26,6 +26,20 @@ Use the [[TiddlyWiki command installable via npm|https://www.npmjs.com/package/t
 tiddlywiki <folder> --render <tiddler> '[encodeuricomponent[]addsuffix[.md]]' 'text/plain' '$:/plugins/cdaven/markdown-export/md-tiddler'
 ```
 
+!! Exporting to Different Targets
+
+From version 0.9, you can export to different "targets" to get slightly different results.
+
+Currently, the actual Markdown syntax is the same for all targets.
+
+What differs is the frontmatter (meta data), the internal link syntax and the filenames in a zip archive.
+
+The default target is `pandoc`, which is how the plugin has always worked until now. This target is mostly compatible with Obsidian as well.
+
+The new target is `logseq`, which is necessary because Logseq has a different syntax for frontmatter and encoding of special characters in filenames.
+
+Set the export target by editing [[$:/plugins/cdaven/markdown-export/exporttarget]].
+
 !! Homepage
 
 This plugin's homepage is at https://cdaven.github.io/tiddlywiki/

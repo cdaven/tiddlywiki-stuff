@@ -47,6 +47,11 @@ Recommended tsconfig.json:
 
 ## Changelog
 
+### 0.9.0 (2025-01-01)
+
+* Added feature to export to zip archives, which allows the plugin to set the filenames based on the tiddler titles
+* Added export target setting, to export to either Pandoc/Obsidian or Logseq
+
 ### 0.6.5 (2024-12-28)
 
 * Fix usage of &, <, > in math equations

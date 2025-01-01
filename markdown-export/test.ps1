@@ -446,7 +446,7 @@ TestExport -TwPage 'TestPage/Links' -Expected $expected
 
 # -------------------------------------------------------------------------
 Write-Output "Testing frontmatter"
-SetExportTarget -Target 'obsidian'
+SetExportTarget -Target 'pandoc'
 # -------------------------------------------------------------------------
 
 $expected = @'

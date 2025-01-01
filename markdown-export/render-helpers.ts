@@ -162,7 +162,7 @@ export function titleToFilename(title: string, exportTarget: ExportTarget): stri
     }
 }
 
-export type ExportTarget = "obsidian" | "logseq" | "default";
+export type ExportTarget = "pandoc" | "logseq";
 
 function getSetting(title: string, defaultValue: string): string {
     const tiddler = $tw.wiki.getTiddler(title);
@@ -176,11 +176,9 @@ function getSetting(title: string, defaultValue: string): string {
 
 export function getExportTarget(): ExportTarget {
     switch (getSetting("$:/plugins/cdaven/markdown-export/exporttarget", "default").toLowerCase()) {
-        case "obsidian":
-            return "obsidian";
         case "logseq":
             return "logseq";
         default:
-            return "default";
+            return "pandoc";
     }
 }
