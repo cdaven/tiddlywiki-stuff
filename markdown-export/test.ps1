@@ -2,6 +2,7 @@
 
 $TW_SINGLE_FILE = Join-Path "..\tiddlywiki" -ChildPath "index.html"
 $TW_NODE_DIR = "TW5.Test"
+$PLUGIN_DIR = Join-Path $TW_NODE_DIR -ChildPath "/plugins/markdown-export"
 
 Write-Host "Loading TiddlyWiki ..."
 npx tiddlywiki --load $TW_SINGLE_FILE --savewikifolder $TW_NODE_DIR
@@ -9,41 +10,50 @@ if (!($?)) {
     Exit 9
 }
 
-function RemoveFrontMatter()
-{
+function RemoveFrontMatter() {
     param ($Markdown)
-    return ($Markdown -Split "^---[\r\n]", 3, "multiline")[2];
+    # Remove everything until the first double newline
+    $Parts = $Markdown -Split "\r?\n\r?\n", 2
+    return $Parts[1].Trim()
 }
 
-function GetFrontMatter()
-{
+function GetFrontMatter() {
     param ($Markdown)
-    $string = ($Markdown -Split "^---[\r\n]", 3, "multiline")[1]
-    return $string.Trim();
+    if ($Markdown.StartsWith("---")) {
+        return ($Markdown -Split "^---\r?\n", 3, "multiline")[1].Trim()
+    }
+    else {
+        $Parts = $Markdown -Split "\r?\n\r?\n", 2
+        return $Parts[0].Trim()
+    }
 }
 
-function TrimNewlines()
-{
+function TrimNewlines() {
     param ($String)
-    return $String -Replace "^`n+","" -Replace "`n+$",""
+    return $String -Replace "^`n+", "" -Replace "`n+$", ""
 }
 
-function NormalizeNewlines()
-{
+function NormalizeNewlines() {
     param ($String)
-    return $String -Replace "`r`n","`n"
+    return $String -Replace "`r`n", "`n"
 }
 
-function CompareMarkdown()
-{
+function CompareMarkdown() {
     param ($Actual, $Expected)
     $_act = TrimNewlines(NormalizeNewlines($Actual))
     $_exp = TrimNewlines(NormalizeNewlines($Expected))
     return $_act -ceq $_exp;
 }
 
-function TestExport()
-{
+function SetExportTarget() {
+    param ($Target)
+    $filePath = "$PLUGIN_DIR\`$__plugins_cdaven_markdown-export_exporttarget.tid"
+    $tiddler = Get-Content $filePath
+    $tiddler[-1] = $Target
+    $tiddler -join "`n" | Set-Content -NoNewline -Path $filePath
+}
+
+function TestExport() {
     param ($TwPage, $Expected, $Scope = "body")
 
     $mdFile = $TwPage -replace "/", "_"
@@ -68,12 +78,6 @@ function TestExport()
         $host.ui.RawUI.ForegroundColor = "DarkRed"
         Write-Host "[[$TwPage]] failed!"
         $host.ui.RawUI.ForegroundColor = $originalColor
-        
-        # Write-Host "--- Expected:"
-        # Write-Host $expected
-        # Write-Host "--- Actual:"
-        # Write-Host $actual
-        # Write-Host "---"
 
         Write-Host "Saving actual and expected data to files"
         $actual | Out-File "$mdFile.actual.md"
@@ -103,67 +107,6 @@ if (CompareMarkdown -Expected $foo -Actual $bar) {
 }
 
 # -------------------------------------------------------------------------
-
-$expected = @'
-title: 'TestPage/FrontMatter/FieldNames'
-date: '2024-06-29T01:37:51.193Z'
-tags: ['TestData', 'TestData/Fields']
-created: '2024-06-28T22:42:41.002Z'
-dir-ty-field: 'dir-ty-field'
-CamelCaseField: 'CamelCaseField'
-ALLCAPS: 'ALLCAPS'
-really-dir-ty-<field>**`::`: 'really-dir-ty-<field>**`::`'
-π: 'π'
-dir-ty-field-lotsa-colons: 'dir-ty-field-lotsa-colons'
-'@
-TestExport -TwPage 'TestPage/FrontMatter/FieldNames' -Expected $expected -Scope "frontmatter"
-
-$expected = @'
-title: 'TestPage/FrontMatter/Dates'
-date: '2024-06-29T02:10:13.612Z'
-tags: ['TestData', 'TestData/Fields']
-a-date: '2000-10-01'
-a-datetime: '2000-10-01 13:30:00'
-a-number: 2024
-created: '2024-06-28T22:33:52.507Z'
-custom-tw-date: '2024-01-01T00:00:00.000Z'
-'@
-TestExport -TwPage 'TestPage/FrontMatter/Dates' -Expected $expected -Scope "frontmatter"
-
-$expected = @'
-title: 'TestPage/FrontMatter/Strings'
-date: '2024-06-29T02:50:24.871Z'
-tags: ['TestData', 'TestData/Fields']
-created: '2024-06-28T22:36:28.147Z'
-custom-field: 'String with spaces'
-dir-ty-field: '   3 spaces with string   '
-string-with-quotes-around: '"Hello world"'
-string-with-quotes-inside: 'Hello "world", how are you?'
-string-with-single-around: "'Hello world'"
-string-with-single-inside: "McDonald's"
-string-with-yaml-chars: '>- this could be `problematic` [or not]'
-utf8-example: 'π, café, Straße, 从'
-'@
-TestExport -TwPage 'TestPage/FrontMatter/Strings' -Expected $expected -Scope "frontmatter"
-
-$expected = @'
-title: 'TestPage/FrontMatter/Numbers'
-date: '2024-06-29T02:37:19.623Z'
-tags: ['TestData', 'TestData/Fields']
-a-large-number: 3.14159265359e12
-a-number: 1234
-a-real-number: 3.14159265359
-created: '2024-06-28T22:37:26.547Z'
-'@
-TestExport -TwPage 'TestPage/FrontMatter/Numbers' -Expected $expected -Scope "frontmatter"
-
-$expected = @'
-title: 'TestPage/FrontMatter/Tags'
-date: '2024-06-29T00:10:31.866Z'
-tags: ['TestData', 'TestData/Fields', 'Another Tag', 'Tag2', '2024', 'π', "Tag o'mine"]
-created: '2024-06-28T22:39:21.848Z'
-'@
-TestExport -TwPage 'TestPage/FrontMatter/Tags' -Expected $expected -Scope "frontmatter"
 
 $expected = @'
 # TestPage/BasicFormatting
@@ -212,21 +155,6 @@ $expected = @'
 #### h4
 '@
 TestExport -TwPage 'TestPage/Headings' -Expected $expected
-
-$expected = @'
-# TestPage/Links
-
-An internal link: Markdown Export Plugin. These are rendered as plain text, since the target of the link may or may not be present in the exported material.
-
-An internal link with an alias: alias.
-
-An external link: <https://tiddlywiki.com>.
-
-An external link with an alias: [TiddlyWiki](https://tiddlywiki.com).
-
-A CamelCase link and a CamelCase non-link.
-'@
-TestExport -TwPage 'TestPage/Links' -Expected $expected
 
 $expected = @'
 # TestPage/Lists
@@ -439,17 +367,6 @@ I would � some �!
 TestExport -TwPage 'TestPage/FontAwesome' -Expected $expected
 
 $expected = @'
-# TestPage/SelfReferencing
-
-Referencing the current tiddler (TestPage/SelfReferencing) in various ways:
-
-* TestPage/SelfReferencing
-
-A short and sweet description
-'@
-TestExport -TwPage 'TestPage/SelfReferencing' -Expected $expected
-
-$expected = @'
 # TestPage/KaTeX
 
 Rendering of this in both TiddlyWiki and the exported markup requires the [KaTeX plugin](https://tiddlywiki.com/plugins/tiddlywiki/katex/).
@@ -477,5 +394,191 @@ TestExport -TwPage 'TestPage/KaTeX' -Expected $expected
 
 # -------------------------------------------------------------------------
 
+$expected = @'
+# TestPage/SelfReferencing
+
+Referencing the current tiddler (TestPage/SelfReferencing) in various ways:
+
+* [[TestPage/SelfReferencing]]
+
+A short and sweet description
+'@
+TestExport -TwPage 'TestPage/SelfReferencing' -Expected $expected
+
+$expected = @'
+# TestPage/Links
+
+An internal link: [[Markdown Export Plugin]]. These are rendered differently, depending on the [[$%3A/plugins/cdaven/markdown-export/exporttarget|export target]].
+
+An internal link with an alias: [[Markdown Export Plugin|alias]].
+
+An external link: <https://tiddlywiki.com>.
+
+An external link with an alias: [TiddlyWiki](https://tiddlywiki.com).
+
+A CamelCase link and a CamelCase non-link.
+
+This link contains mostly problematic filename characters, and will be escaped if exported in a way that will "preserve" wiki-style links: [[%2Efoo/%3C%3E%3A;=~+%2A.%3F!%5C%22'`$%23[]{}.]]
+'@
+TestExport -TwPage 'TestPage/Links' -Expected $expected
+
+# -------------------------------------------------------------------------
+Write-Output "Testing internal links for Logseq"
+SetExportTarget -Target 'logseq'
+# -------------------------------------------------------------------------
+
+$expected = @'
+# TestPage/Links
+
+An internal link: [[Markdown Export Plugin]]. These are rendered differently, depending on the [export target]([[$%3A___plugins___cdaven___markdown-export___exporttarget]]).
+
+An internal link with an alias: [alias]([[Markdown Export Plugin]]).
+
+An external link: <https://tiddlywiki.com>.
+
+An external link with an alias: [TiddlyWiki](https://tiddlywiki.com).
+
+A CamelCase link and a CamelCase non-link.
+
+This link contains mostly problematic filename characters, and will be escaped if exported in a way that will "preserve" wiki-style links: [[%2Efoo___%3C%3E%3A;=~+%2A.%3F!%5C%22'`$%23[]{}.___]]
+'@
+TestExport -TwPage 'TestPage/Links' -Expected $expected
+
+# -------------------------------------------------------------------------
+Write-Output "Testing frontmatter"
+SetExportTarget -Target 'obsidian'
+# -------------------------------------------------------------------------
+
+$expected = @'
+title: 'TestPage/FrontMatter/FieldNames'
+date: '2024-06-29T01:37:51.193Z'
+tags: ['TestData', 'TestData/Fields']
+created: '2024-06-28T22:42:41.002Z'
+dir-ty-field: 'dir-ty-field'
+CamelCaseField: 'CamelCaseField'
+ALLCAPS: 'ALLCAPS'
+really-dir-ty-<field>**`::`: 'really-dir-ty-<field>**`::`'
+π: 'π'
+dir-ty-field-lotsa-colons: 'dir-ty-field-lotsa-colons'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/FieldNames' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Dates'
+date: '2024-06-29T02:10:13.612Z'
+tags: ['TestData', 'TestData/Fields']
+a-date: '2000-10-01'
+a-datetime: '2000-10-01 13:30:00'
+a-number: 2024
+created: '2024-06-28T22:33:52.507Z'
+custom-tw-date: '2024-01-01T00:00:00.000Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Dates' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Strings'
+date: '2024-06-29T02:50:24.871Z'
+tags: ['TestData', 'TestData/Fields']
+created: '2024-06-28T22:36:28.147Z'
+custom-field: 'String with spaces'
+dir-ty-field: '   3 spaces with string   '
+string-with-quotes-around: '"Hello world"'
+string-with-quotes-inside: 'Hello "world", how are you?'
+string-with-single-around: "'Hello world'"
+string-with-single-inside: "McDonald's"
+string-with-yaml-chars: '>- this could be `problematic` [or not]'
+utf8-example: 'π, café, Straße, 从'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Strings' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Numbers'
+date: '2024-06-29T02:37:19.623Z'
+tags: ['TestData', 'TestData/Fields']
+a-large-number: 3.14159265359e12
+a-number: 1234
+a-real-number: 3.14159265359
+created: '2024-06-28T22:37:26.547Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Numbers' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title: 'TestPage/FrontMatter/Tags'
+date: '2024-06-29T00:10:31.866Z'
+tags: ['TestData', 'TestData/Fields', 'Another Tag', 'Tag2', '2024', 'π', "Tag o'mine"]
+created: '2024-06-28T22:39:21.848Z'
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Tags' -Expected $expected -Scope "frontmatter"
+
+# -------------------------------------------------------------------------
+Write-Output "Testing frontmatter for Logseq"
+SetExportTarget -Target 'logseq'
+# -------------------------------------------------------------------------
+
+$expected = @'
+title:: TestPage/FrontMatter/FieldNames
+date:: 2024-06-29T01:37:51.193Z
+tags:: TestData, TestData/Fields
+created:: 2024-06-28T22:42:41.002Z
+dir-ty-field:: dir-ty-field
+CamelCaseField:: CamelCaseField
+ALLCAPS:: ALLCAPS
+really-dir-ty-<field>**:: really-dir-ty-<field>**`::`
+dir-ty-field-lotsa-colons:: dir-ty-field-lotsa-colons
+'@
+TestExport -TwPage 'TestPage/FrontMatter/FieldNames' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title:: TestPage/FrontMatter/Dates
+date:: 2024-06-29T02:10:13.612Z
+tags:: TestData, TestData/Fields
+a-date:: 2000-10-01
+a-datetime:: 2000-10-01 13:30:00
+a-number:: 2024
+created:: 2024-06-28T22:33:52.507Z
+custom-tw-date:: 2024-01-01T00:00:00.000Z
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Dates' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title:: TestPage/FrontMatter/Strings
+date:: 2024-06-29T02:50:24.871Z
+tags:: TestData, TestData/Fields
+created:: 2024-06-28T22:36:28.147Z
+custom-field:: String with spaces
+dir-ty-field::    3 spaces with string   
+string-with-quotes-around:: "Hello world"
+string-with-quotes-inside:: Hello "world", how are you?
+string-with-single-around:: 'Hello world'
+string-with-single-inside:: McDonald's
+string-with-yaml-chars:: >- this could be `problematic` [or not]
+utf8-example:: π, café, Straße, 从
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Strings' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title:: TestPage/FrontMatter/Numbers
+date:: 2024-06-29T02:37:19.623Z
+tags:: TestData, TestData/Fields
+a-large-number:: 3.14159265359e12
+a-number:: 1234
+a-real-number:: 3.14159265359
+created:: 2024-06-28T22:37:26.547Z
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Numbers' -Expected $expected -Scope "frontmatter"
+
+$expected = @'
+title:: TestPage/FrontMatter/Tags
+date:: 2024-06-29T00:10:31.866Z
+tags:: TestData, TestData/Fields, Another Tag, Tag2, 2024, π, Tag o'mine
+created:: 2024-06-28T22:39:21.848Z
+'@
+TestExport -TwPage 'TestPage/FrontMatter/Tags' -Expected $expected -Scope "frontmatter"
+
+# -------------------------------------------------------------------------
+
 # Remove TiddlyWiki directory
 Remove-Item -Force -Recurse $TW_NODE_DIR
+
+
+# TOOD: Test front matter with LogSeq as well

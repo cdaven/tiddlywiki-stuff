@@ -6,6 +6,7 @@ module-type: macro
 Macro to output a single tiddler to Markdown, e.g. for use with a template, possibly from the command line.
 \*/
 
+import { getExportTarget } from "./render-helpers.js";
 import { TiddlyWikiRenderer, MarkdownRenderer } from "./render.js";
 
 export const name = "mdtiddler";
@@ -31,8 +32,9 @@ export function run(this: any, title: string = ""): string {
         return "";
     }
 
+    const exportTarget = getExportTarget();
     const twRenderer = new TiddlyWikiRenderer($tw);
-    const renderer = new MarkdownRenderer(twRenderer);
+    const renderer = new MarkdownRenderer(twRenderer, exportTarget);
 
     return renderer.renderTiddler(title) || "";
 };

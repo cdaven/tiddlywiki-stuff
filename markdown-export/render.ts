@@ -5,8 +5,8 @@ module-type: library
 \*/
 
 import { IMarkupRenderer, IWikiRenderer } from "./core.js";
-import { isDomNode, isTextNode, Node } from "./render-helpers.js";
-import { getDefaultRules, NodeRenderer, RulesRecord } from "./render-rules.js";
+import { ExportTarget, isDomNode, isTextNode, Node } from "./render-helpers.js";
+import { getAnchorRule, getDefaultRules, getMetaRule, NodeRenderer, RulesRecord } from "./render-rules.js";
 
 // TODO: Look at/think about https://tiddlywiki.com/static/Creating%2520a%2520custom%2520export%2520format.html
 
@@ -59,12 +59,13 @@ export class TiddlyWikiRenderer implements IWikiRenderer {
 }
 
 export class MarkdownRenderer implements IMarkupRenderer {
-    private tw: IWikiRenderer;
     private rules: RulesRecord;
 
-    constructor(tw: IWikiRenderer) {
+    constructor(private tw: IWikiRenderer, target: ExportTarget) {
         this.tw = tw;
         this.rules = getDefaultRules(this);
+        this.rules["meta"] = getMetaRule(this, target);
+        this.rules["a"] = getAnchorRule(this, target);
     }
 
     /** Fields from TiddlyWiki, but can also store state from rendering to document head */

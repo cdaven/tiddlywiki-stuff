@@ -49,6 +49,9 @@ Move-Item (Join-Path "dist" -ChildPath "render-rules.js") "$PLUGIN_DIR"
 Move-Item (Join-Path "dist" -ChildPath "core.js") "$PLUGIN_DIR"
 Move-Item (Join-Path "dist" -ChildPath "zip-archive.js") "$PLUGIN_DIR"
 
+# Remove Typescript directory
+Remove-Item -Force -Recurse "dist"
+
 # Update content tiddlers
 Copy-Item *.tid "$PLUGIN_DIR"
 

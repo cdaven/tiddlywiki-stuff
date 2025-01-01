@@ -52,6 +52,14 @@ export function isDomNode(node: TW_Node): node is TW_Element {
         return false;
 }
 
+export function isTWDate(value: any): value is Date | string {
+    return value
+        && (
+            typeof value["toISOString"] === "function"
+            || datePatternTW.test(value)
+        );
+}
+
 /** Check if the node is the only node in the paragraph or block */
 export function isOnlyNodeInBlock(node: TW_Node): boolean {
     return node.parentNode
@@ -59,17 +67,27 @@ export function isOnlyNodeInBlock(node: TW_Node): boolean {
         && node.parentNode.children.length == 1;
 }
 
-/** Field values are converted to strings by TW, we switch them back to types supported by YAML. */
-export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true): string {
-    // TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX
-    const datePatternTW = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
+/** TW date format (spaces added for clarity): [UTC] YYYY 0MM 0DD 0hh 0mm 0ss 0XXX */
+const datePatternTW = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
 
-    if (fieldValue.toISOString) {
-        fieldValue = "'" + fieldValue.toISOString() + "'";
+export function formatDate(fieldValue: any): string {
+    if (typeof fieldValue["toISOString"] === "function") {
+        return fieldValue.toISOString();
     }
     else if (datePatternTW.test(fieldValue)) {
         const parsedDate = new Date($tw.utils.parseDate(fieldValue));
-        fieldValue = "'" + parsedDate.toISOString() + "'";
+        return parsedDate.toISOString();
+    }
+    else {
+        console.error(`${fieldValue} is not a valid date`);
+        return null;
+    }
+}
+
+/** Field values are converted to strings by TW, we switch them back to types supported by YAML. */
+export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true): string {
+    if (isTWDate(fieldValue)) {
+        fieldValue = "'" + formatDate(fieldValue) + "'";
     }
     else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
         fieldValue = fieldValue.toString();
@@ -96,7 +114,7 @@ export function latex_htmldecode(s: string): string {
 }
 
 /** Escape special characters in title so it can be used as a filename */
-export function titleToFilename(title: string, wikiLinkStyle: WikiLinkStyle): string {
+export function titleToFilename(title: string, exportTarget: ExportTarget): string {
     let filename = title;
     if (filename[0] == ".") {
         // Escape leading dot in filename à la Logseq
@@ -104,50 +122,65 @@ export function titleToFilename(title: string, wikiLinkStyle: WikiLinkStyle): st
         filename = "%2E" + filename.substring(1);
     }
 
-    switch (wikiLinkStyle) {
-        case "logseq": {
-            // Escape triple underscores (corresponds to / in Logseq)
-            filename = filename.replace("___", "%5F%5F%5F");
-            if (filename[filename.length - 1] == ".") {
-                // Escape trailing dot in filename (don't know why Logseq does this)
-                filename = filename.substring(0, filename.length - 1) + ".___";
-            }
-            return filename.replace(/<|>|:|\*|\?|\||\\|\/|"|#/g, match => ({
-                "<": "%3C",
-                ">": "%3E",
-                ":": "%3A",
-                "*": "%2A",
-                "?": "%3F",
-                "|": "%7C",
-                "\\": "%5C",
-                "\"": "%22",
-                "#": "%23",
-                // Forward slash is used to create a hierarchy,
-                // but all files are still in the same folder
-                "/": "___",
-            }[match]));
+    if (exportTarget == "logseq") {
+        // Escape triple underscores (corresponds to / in Logseq)
+        filename = filename.replace("___", "%5F%5F%5F");
+        if (filename[filename.length - 1] == ".") {
+            // Escape trailing dot in filename (don't know why Logseq does this)
+            filename = filename.substring(0, filename.length - 1) + ".___";
         }
-        default: {
-            // Obsidian doesn't handle illegal filename characters at all,
-            // but we must do something with them, so why not do as Logseq does?
-            return filename.replace(/<|>|:|\*|\?|\||\\|"|#/g, match => ({
-                "<": "%3C",
-                ">": "%3E",
-                ":": "%3A",
-                "*": "%2A",
-                "?": "%3F",
-                "|": "%7C",
-                "\\": "%5C",
-                "\"": "%22",
-                "#": "%23",
-                // Keep forward slashes, since Obsidian expects a folder structure
-            }[match]));
-        }
+        return filename.replace(/<|>|:|\*|\?|\||\\|\/|"|#/g, match => ({
+            "<": "%3C",
+            ">": "%3E",
+            ":": "%3A",
+            "*": "%2A",
+            "?": "%3F",
+            "|": "%7C",
+            "\\": "%5C",
+            "\"": "%22",
+            "#": "%23",
+            // Forward slash is used to create a hierarchy,
+            // but all files are still in the same folder
+            "/": "___",
+        }[match]));
+    }
+    else {
+        // Obsidian doesn't handle illegal filename characters at all,
+        // but we must do something with them, so why not do as Logseq does?
+        return filename.replace(/<|>|:|\*|\?|\||\\|"|#/g, match => ({
+            "<": "%3C",
+            ">": "%3E",
+            ":": "%3A",
+            "*": "%2A",
+            "?": "%3F",
+            "|": "%7C",
+            "\\": "%5C",
+            "\"": "%22",
+            "#": "%23",
+            // Keep forward slashes, since Obsidian expects a folder structure
+        }[match]));
     }
 }
 
-export type WikiLinkStyle = "obsidian" | "logseq" | "default";
+export type ExportTarget = "obsidian" | "logseq" | "default";
 
-// Obsidian accepterar inte ogiltiga filnamn som titlar! Den förväntar sig en mappstruktur och länkar så här: [[mapp/titel|alias]]
+function getSetting(title: string, defaultValue: string): string {
+    const tiddler = $tw.wiki.getTiddler(title);
+    if (tiddler) {
+        return tiddler.fields.text || defaultValue;
+    }
+    else {
+        return defaultValue;
+    }
+}
 
-// Logseq: .foo/<>:;=~+*.?!|\"'`$#[]{}. --> %2Efoo___%3C%3E%3A;=~+%2A.%3F!%7C%5C%22'`$%23[]{}.___
+export function getExportTarget(): ExportTarget {
+    switch (getSetting("$:/plugins/cdaven/markdown-export/exporttarget", "default").toLowerCase()) {
+        case "obsidian":
+            return "obsidian";
+        case "logseq":
+            return "logseq";
+        default:
+            return "default";
+    }
+}

@@ -4,8 +4,7 @@ type: application/javascript
 module-type: macro
 \*/
 
-import { titleToFilename, WikiLinkStyle } from "./render-helpers.js";
-import { getAnchorRule } from "./render-rules.js";
+import { ExportTarget, getExportTarget, titleToFilename } from "./render-helpers.js";
 import { MarkdownRenderer, TiddlyWikiRenderer } from "./render.js";
 import { ZipArchive } from "./zip-archive.js";
 
@@ -40,27 +39,6 @@ function insertNote(markdownTiddler: string, note: string): string {
     return markdownTiddler.replace(/(---\n+)(#)/, `$1<!-- ${note.replace(/\$/g, "$$$$")} -->\n\n$2`);
 }
 
-function getSetting(title: string, defaultValue: string): string {
-    const tiddler = $tw.wiki.getTiddler(title);
-    if (tiddler) {
-        return tiddler.fields.text || defaultValue;
-    }
-    else {
-        return defaultValue;
-    }
-}
-
-function getWikiLinkStyle(): WikiLinkStyle {
-    switch (getSetting("$:/plugins/cdaven/markdown-export/wikilinkstyle", "default").toLowerCase()) {
-        case "obsidian":
-            return "obsidian";
-        case "logseq":
-            return "logseq";
-        default:
-            return "default";
-    }
-}
-
 /** LaTeX page break, recognized by Pandoc */
 const pageBreak = "\n\n\\newpage\n\n";
 
@@ -76,12 +54,9 @@ export function run(filter: string = "", note: string = "", version: string = ""
     }
 
     const createArchive = extension == ".zip";
+    const exportTarget = getExportTarget();
     const twRenderer = new TiddlyWikiRenderer($tw);
-    const renderer = new MarkdownRenderer(twRenderer);
-
-    const wikiLinkStyle = getWikiLinkStyle();
-    // Configure how internal links should be rendered
-    renderer.setRule("a", getAnchorRule(this, wikiLinkStyle));
+    const renderer = new MarkdownRenderer(twRenderer, exportTarget);
 
     // Expand macros in note
     note = twRenderer.wikifyText(note);
@@ -115,7 +90,7 @@ export function run(filter: string = "", note: string = "", version: string = ""
         }
 
         for (const mdTiddler of markdownTiddlers) {
-            zipArchive.addFile(titleToFilename(mdTiddler.title, wikiLinkStyle) + ".md", mdTiddler.text);
+            zipArchive.addFile(titleToFilename(mdTiddler.title, exportTarget) + ".md", mdTiddler.text);
         }
         return zipArchive.toBase64();
     }
