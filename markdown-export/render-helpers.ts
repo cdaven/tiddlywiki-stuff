@@ -71,37 +71,57 @@ export function isOnlyNodeInBlock(node: TW_Node): boolean {
 const datePatternTW = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{3})$/;
 
 export function formatDate(fieldValue: any): string {
+    let isoString = "";
     if (typeof fieldValue["toISOString"] === "function") {
-        return fieldValue.toISOString();
+        isoString = fieldValue.toISOString();
     }
     else if (datePatternTW.test(fieldValue)) {
         const parsedDate = new Date($tw.utils.parseDate(fieldValue));
-        return parsedDate.toISOString();
+        isoString = parsedDate.toISOString();
     }
     else {
         console.error(`${fieldValue} is not a valid date`);
         return null;
     }
+ 
+    // Remove ".123Z" suffix (milliseconds and UTC marker),
+    // so that it matches Obsidian's "date & time" type.
+    return isoString.substring(0, isoString.lastIndexOf("."));
 }
 
-/** Field values are converted to strings by TW, we switch them back to types supported by YAML. */
-export function formatYAMLString(fieldValue: any, enableNumbers: boolean = true): string {
+/** Format property values for the YAML frontmatter */
+export function formatYamlPropertyValue(fieldValue: any, enableNumbers: boolean = true): string {
     if (isTWDate(fieldValue)) {
-        fieldValue = "'" + formatDate(fieldValue) + "'";
+        return formatDate(fieldValue);
     }
     else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
-        fieldValue = fieldValue.toString();
+        return fieldValue.toString();
     }
     else {
-        // Remove newlines and escape quotes
-        fieldValue = fieldValue.toString().replace(/[\r\n]+/g, "");
-        if (fieldValue.includes("'")) {
-            fieldValue = '"' + fieldValue.replace('"', '\\"') + '"';
-        } else {
-            fieldValue = "'" + fieldValue.replace("'", "''") + "'";
-        }
+        return '"' + 
+            fieldValue.toString()
+                // Remove newlines
+                .replace(/[\r\n]+/g, " ")
+                // Escape backslashes
+                .replace(/\\/g, "\\\\")
+                // Escape double quotes
+                .replace(/"/g, '\\"')
+            + '"';
     }
-    return fieldValue;
+}
+
+/** Format property values for the Logseq frontmatter */
+export function formatLogseqPropertyValue(fieldValue: any, enableNumbers: boolean = true): string {
+    if (isTWDate(fieldValue)) {
+        return formatDate(fieldValue);
+    }
+    else if (enableNumbers && !isNaN(parseFloat(fieldValue)) && isFinite(fieldValue as any)) {
+        return fieldValue.toString();
+    }
+    else {
+        // Remove newlines
+        return fieldValue.toString().replace(/[\r\n]+/g, " ");
+    }
 }
 
 /** Decode HTML special entities <, >, & that can be used in LaTeX math */
@@ -145,8 +165,11 @@ export function titleToFilename(title: string, exportTarget: ExportTarget): stri
         }[match]));
     }
     else {
-        // Obsidian doesn't handle illegal filename characters at all,
-        // but we must do something with them, so why not do as Logseq does?
+        // Obsidian accepts some "special characters" in wikilinks,
+        // that are also accepted by the operating systems. Forward
+        // slashes are retained, so that we can create a folder structure
+        // in a zip archive. I believe Pandoc and Obsidian could be
+        // handled with the same logic here.
         return filename.replace(/<|>|:|\*|\?|\||\\|"|#/g, match => ({
             "<": "%3C",
             ">": "%3E",
@@ -157,12 +180,17 @@ export function titleToFilename(title: string, exportTarget: ExportTarget): stri
             "\\": "%5C",
             "\"": "%22",
             "#": "%23",
-            // Keep forward slashes, since Obsidian expects a folder structure
+            // Keep forward slashes to create a folder structure
         }[match]));
     }
 }
 
-export type ExportTarget = "pandoc" | "logseq";
+export type ExportTarget = "pandoc" | "obsidian" | "logseq";
+const validExportTargets = ["pandoc", "obsidian", "logseq"] as ExportTarget[];
+const defaultExportTarget = "pandoc" as ExportTarget;
+function isValidExportTarget(value: string): value is ExportTarget {
+    return validExportTargets.indexOf(value as ExportTarget) !== -1;
+}
 
 function getSetting(title: string, defaultValue: string): string {
     const tiddler = $tw.wiki.getTiddler(title);
@@ -175,10 +203,6 @@ function getSetting(title: string, defaultValue: string): string {
 }
 
 export function getExportTarget(): ExportTarget {
-    switch (getSetting("$:/plugins/cdaven/markdown-export/exporttarget", "default").toLowerCase()) {
-        case "logseq":
-            return "logseq";
-        default:
-            return "pandoc";
-    }
+    const value = getSetting("$:/plugins/cdaven/markdown-export/exporttarget", defaultExportTarget).toLowerCase();
+    return isValidExportTarget(value) ? value : defaultExportTarget;
 }

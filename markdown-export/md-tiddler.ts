@@ -7,7 +7,7 @@ Macro to output a single tiddler to Markdown, e.g. for use with a template, poss
 \*/
 
 import { getExportTarget } from "./render-helpers.js";
-import { TiddlyWikiRenderer, MarkdownRenderer } from "./render.js";
+import { MarkdownRenderer, TiddlyWikiRenderer } from "./render.js";
 
 export const name = "mdtiddler";
 

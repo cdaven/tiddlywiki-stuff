@@ -5,7 +5,7 @@ module-type: library
 \*/
 
 import { IMarkupRenderer } from "./core";
-import { btoa, ExportTarget, formatDate, formatYAMLString, isDomNode, isOnlyNodeInBlock, isTextNode, isTWDate, latex_htmldecode, titleToFilename, trimEnd } from "./render-helpers";
+import { btoa, ExportTarget, formatDate, formatLogseqPropertyValue, formatYamlPropertyValue, isDomNode, isOnlyNodeInBlock, isTextNode, isTWDate, latex_htmldecode, titleToFilename, trimEnd } from "./render-helpers";
 
 export type NodeRenderer = (node: TW_Element, innerMarkup: string) => string | null;
 export type RulesRecord = Record<string, NodeRenderer>;
@@ -172,6 +172,8 @@ export function getDefaultRules(renderer: IMarkupRenderer): RulesRecord {
             }
         },
         "img": (node) => {
+            // TODO: If in zip archive mode, and the image is "local",
+            // create a Markdown image link instead of inlining
             let caption = node.attributes?.title || "";
             let src = node.attributes?.src || "";
             const svgPrefix = "data:image/svg+xml,";
@@ -379,71 +381,82 @@ export function getMetaRule(renderer: IMarkupRenderer, exportTarget: ExportTarge
             other: {},
         };
         for (const field in fields) {
-            if (["text", "title", "author", "modified", "description", "tags"].indexOf(field) !== -1)
-                // Ignore full text and the fields already taken care of
+            if (["text", "title", "author", "modified", "description", "tags", "type"].indexOf(field) !== -1)
+                // Ignore full text and the fields already taken care of, plus "type"
                 continue;
 
             metadata.other[field] = fields[field];
         }
 
+        let frontMatter = "";
         if (exportTarget == "logseq") {
-            let frontMatter: string[] = [];
+            // Logseq uses its own syntax: https://docs.logseq.com/#/page/properties
+            let properties: string[] = [];
             if (metadata.title) {
-                frontMatter.push(`title:: ${metadata.title}`);
+                properties.push(`title:: ${metadata.title}`);
             }
             if (metadata.author) {
-                frontMatter.push(`author:: ${metadata.author}`);
+                properties.push(`author:: ${metadata.author}`);
             }
             if (metadata.date) {
-                frontMatter.push(`date:: ${formatDate(metadata.date)}`);
+                properties.push(`date:: ${formatDate(metadata.date)}`);
             }
             if (metadata.abstract) {
-                frontMatter.push(`abstract:: ${metadata.abstract}`);
+                properties.push(`abstract:: ${formatLogseqPropertyValue(metadata.abstract)}`);
             }
             if (metadata.tags && metadata.tags.length > 0) {
-                frontMatter.push(`tags:: ${metadata.tags.join(', ')}`);
+                properties.push(`tags:: ${metadata.tags.join(', ')}`);
             }
             for (const field in metadata.other) {
                 // Remove all illegal characters from field/property names
                 const fieldName = field.trim().replace(/\s+/g, "-").replace(/[^a-z0-9.*+!?$%&=<>_-]/gi, "");
                 if (fieldName.length > 0) {
-                    let fieldValue = metadata.other[field];
-                    if (isTWDate(fieldValue)) {
-                        fieldValue = formatDate(fieldValue);
-                    }
-                    frontMatter.push(`${fieldName}:: ${fieldValue}`);
+                    properties.push(`${fieldName}:: ${formatLogseqPropertyValue(metadata.other[field])}`);
                 }
             }
-            return `${frontMatter.join("\n")}\n\n# ${metadata.title}\n\n`;
+            frontMatter = `${properties.join("\n")}\n\n`;
         }
         else {
-            let frontMatter: string[] = [];
+            // Both Obsidian and Pandoc accepts YAML, but values need not be quoted
+            let properties: string[] = [];
             if (metadata.title) {
-                frontMatter.push(`title: '${metadata.title}'`);
+                properties.push(`title: ${formatYamlPropertyValue(metadata.title)}`);
             }
             if (metadata.author) {
-                frontMatter.push(`author: '${metadata.author}'`);
+                properties.push(`author: ${formatYamlPropertyValue(metadata.author)}`);
             }
             if (metadata.date) {
-                frontMatter.push(`date: ${formatYAMLString(metadata.date)}`);
+                properties.push(`date: ${formatDate(metadata.date)}`);
             }
             if (metadata.abstract) {
-                frontMatter.push(`abstract: '${metadata.abstract}'`);
+                properties.push(`abstract: ${formatYamlPropertyValue(metadata.abstract)}`);
             }
             if (metadata.tags && metadata.tags.length > 0) {
-                // Enclose tags with single quotes and escape single quotes inside the tags
-                const tags: string[] = metadata.tags.map((t: string) => formatYAMLString(t, false));
-                frontMatter.push(`tags: [${tags.join(', ')}]`);
+                const tags: string[] = metadata.tags.map((t: string) => formatYamlPropertyValue(t, false));
+                if (exportTarget == "pandoc") {
+                    // Pandoc expects this in a "keywords" property
+                    properties.push(`keywords: [${tags.join(', ')}]`);
+                }
+                else {
+                    // Obsidian expects this in a "tags" property
+                    properties.push(`tags: [${tags.join(', ')}]`);
+                }
             }
             for (const field in metadata.other) {
                 const fieldName = field.trim().replace(/\s+/g, "-").replace(/[\:]+$/, "");
                 if (fieldName.length) {
-                    const fieldValue = formatYAMLString(metadata.other[field]);
-                    frontMatter.push(`${fieldName}: ${fieldValue}`);
+                    properties.push(`${fieldName}: ${formatYamlPropertyValue(metadata.other[field])}`);
                 }
             }
-            return `---\n${frontMatter.join("\n")}\n---\n\n# ${metadata.title}\n\n`;
+            frontMatter = `---\n${properties.join("\n")}\n---\n\n`;
         }
+
+        if (exportTarget == "pandoc") {
+            // Add h1 header (Logseq and Obsidian already shows the filename/title as header)
+            frontMatter += `# ${metadata.title}\n\n`;
+        }
+
+        return frontMatter;
     };
 }
 
@@ -455,13 +468,19 @@ export function getAnchorRule(renderer: IMarkupRenderer, exportTarget: ExportTar
             // Remove leading # character and decode html entities à la TiddlyWiki
             const target = decodeURIComponent(href.substring(1));
             const alias = im;
-            if (exportTarget == "logseq") {
+            if (exportTarget == "pandoc") {
+                // Use the common Markdown link syntax to a different file
+                return `[${alias}](${titleToFilename(target, exportTarget)}.md)`;
+            }
+            else if (exportTarget == "logseq") {
+                // Logseq links should include special characters that will be escaped
+                // before looking up the corresponding filename
                 if (target == alias) {
-                    return `[[${titleToFilename(target, exportTarget)}]]`;
+                    return `[[${target}]]`;
                 }
                 else {
                     // Logseq alias syntax
-                    return `[${alias}]([[${titleToFilename(target, exportTarget)}]])`;
+                    return `[${alias}]([[${target}]])`;
                 }
             }
             else {

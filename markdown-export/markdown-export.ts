@@ -72,6 +72,7 @@ export function run(filter: string = "", note: string = "", version: string = ""
         }
         if (markdownTiddler) {
             if (note) {
+                // TODO: Move note to frontmatter or maybe delete altogether?!!
                 markdownTiddler = insertNote(markdownTiddler, note);
             }
 
