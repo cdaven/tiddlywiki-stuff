@@ -4,7 +4,7 @@ type: application/javascript
 module-type: macro
 \*/
 
-import { ExportTarget, getExportTarget, titleToFilename } from "./render-helpers.js";
+import { getExportTarget, titleToFilename } from "./render-helpers.js";
 import { MarkdownRenderer, TiddlyWikiRenderer } from "./render.js";
 import { ZipArchive } from "./zip-archive.js";
 
@@ -34,11 +34,6 @@ interface MarkdownTiddler {
     text: string;
 }
 
-/** Insert note as comment right after front matter */
-function insertNote(markdownTiddler: string, note: string): string {
-    return markdownTiddler.replace(/(---\n+)(#)/, `$1<!-- ${note.replace(/\$/g, "$$$$")} -->\n\n$2`);
-}
-
 /** LaTeX page break, recognized by Pandoc */
 const pageBreak = "\n\n\\newpage\n\n";
 
@@ -58,9 +53,6 @@ export function run(filter: string = "", note: string = "", version: string = ""
     const twRenderer = new TiddlyWikiRenderer($tw);
     const renderer = new MarkdownRenderer(twRenderer, exportTarget);
 
-    // Expand macros in note
-    note = twRenderer.wikifyText(note);
-
     let markdownTiddlers: MarkdownTiddler[] = [];
     for (const title of $tw.wiki.filterTiddlers(filter)) {
         let markdownTiddler: string | null = null;
@@ -71,11 +63,6 @@ export function run(filter: string = "", note: string = "", version: string = ""
             console.error(err);
         }
         if (markdownTiddler) {
-            if (note) {
-                // TODO: Move note to frontmatter or maybe delete altogether?!!
-                markdownTiddler = insertNote(markdownTiddler, note);
-            }
-
             markdownTiddlers.push({
                 title: title,
                 text: markdownTiddler.trim()
