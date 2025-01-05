@@ -4,19 +4,28 @@ title: $:/plugins/cdaven/markdown-export/readme
 
 This is a plugin for ~TiddlyWiki that lets you export tiddlers to Markdown, either in the web browser or on the command line.
 
+<style type="text/css">
+h3 svg, p svg {
+    height: 1rem;
+    padding: 0;
+}
+</style>
+
 !! In the browser (or similar graphical user interfaces)
 
-!!! Toolbar Markdown button: {{$:/plugins/cdaven/markdown-export/icon}}
+!!! Markdown button
 
-Click the "Markdown" button on any tiddler and pick between copying the tiddler's contents as Markdown to the clipboard, open a temporary tiddler with the Markdown code, or download the tiddler as a Markdown file.
+Click the "Markdown" button ({{$:/plugins/cdaven/markdown-export/icon}}) on any tiddler and pick between copying the tiddler's contents as Markdown to the clipboard, open a temporary tiddler with the Markdown code, or download the tiddler as a Markdown file.
 
 Hide or move this button here: [[$:/core/ui/ControlPanel/Toolbars]]
 
-!!! Export tiddlers buttons: {{$:/core/images/export-button}}
+!!! Export tiddlers button
 
-Click the "Export tiddler" button or menu item on the tiddler to export, and select "Markdown". A Markdown file will be generated and downloaded.
+Click the "Export tiddler" button ({{$:/core/images/export-button}}) or menu item on the tiddler to export, and select "Markdown". A Markdown file will be generated and downloaded.
 
 You can also use the "Export tiddlers" button from [[$:/AdvancedSearch]] in the "Filter" tab, to export many tiddlers to one big Markdown file.
+
+If you export multiple tiddlers, it is recommended to select "Markdown (.zip archive)", since each tiddler will then be saved to its own Markdown file in the zip archive.
 
 !! On the command line
 
@@ -30,13 +39,9 @@ tiddlywiki <folder> --render <tiddler> '[encodeuricomponent[]addsuffix[.md]]' 't
 
 From version 0.9, you can export to different "targets" to get slightly different results.
 
-Currently, the actual Markdown syntax is the same for all targets.
+The default target is `pandoc`, which is how the plugin has always worked until now.
 
-What differs is the frontmatter (meta data), the internal link syntax and the filenames in a zip archive.
-
-The default target is `pandoc`, which is how the plugin has always worked until now. This target is mostly compatible with Obsidian as well.
-
-The new target is `logseq`, which is necessary because Logseq has a different syntax for frontmatter and encoding of special characters in filenames.
+You can also select `obsidian` or `logseq`.
 
 Set the export target by editing [[$:/plugins/cdaven/markdown-export/exporttarget]].
 
